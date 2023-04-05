@@ -1,4 +1,5 @@
 #include "tspwindow.h"
+#include "ant_colony.h"
 #include "./ui_tspwindow.h"
 
 TSPWindow::TSPWindow(QWidget *parent)
