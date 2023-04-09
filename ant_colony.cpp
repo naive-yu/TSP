@@ -5,13 +5,13 @@
 #include "ant_colony.h"
 #include<iostream>
 #include<cmath>
-#include<QDebug>
 #include<random>
 #include<QString>
 
 using namespace std;
 
-ant_colony::ant_colony(int city, int ants, int max_iter, int Q, float alpha, float beta, float rho)
+ant_colony::ant_colony() = default;
+ant_colony::ant_colony(int city, int ants, int max_iter, int Q, double alpha, double beta, double rho)
 :city(city),ants(ants),max_iter(max_iter),Q(Q),alpha(alpha),beta(beta),rho(rho){
 }
 
@@ -112,22 +112,39 @@ void ant_colony::run(){
         }//在整个路径上的信息素增量
         message[best_route[count][city-1]][best_route[count][0]]+=rho*(double)Q/best;
     }
-    output();
 }
-void ant_colony::output(){
+void ant_colony::output() {
     //找到最短路径
-    int index=0;
-    double best=best_aim[0];
-    for(int i=1;i<max_iter;i++){
-        if(best_aim[i]<best){
-            best=best_aim[i];
-            index=i;
+    int index = 0;
+    double best = best_aim[0];
+    for (int i = 1; i < max_iter; i++) {
+        if (best_aim[i] < best) {
+            best = best_aim[i];
+            index = i;
         }
     }
     //输出结果
-    cout<<"我的最短环路距离："<<best_aim[index]<<endl;
-    cout<<"我的最短环路：";
-    for(int i=0;i<city;i++){
-        cout<<best_route[index][i]<<"->";
+    cout << "我的最短环路距离：" << best_aim[index] << endl;
+    cout << "我的最短环路：";
+    for (int i = 0; i < city; i++) {
+        cout << best_route[index][i]+1 << "->";
     }
+    cout << endl;
 }
+vector<vector<int>> ant_colony::get_position() {
+    return position;
+}
+
+vector<vector<int>> ant_colony::get_best_route() {
+    return best_route;
+}
+
+vector<double> ant_colony::get_avg_aim() {
+    return avg_aim;
+}
+
+vector<double> ant_colony::get_best_aim() {
+    return best_aim;
+}
+
+

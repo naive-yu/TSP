@@ -12,13 +12,18 @@
 using namespace std;
 class ant_colony {
 public:
-    ant_colony(int city,int ants,int max_iter,int Q,float alpha,float beta,float rho);
+    ant_colony(int city,int ants,int max_iter,int Q,double alpha,double beta,double rho);
+    ant_colony();
     void init();
     void run();
     void output();
+    vector<vector<int>> get_position();
+    vector<vector<int>> get_best_route();
+    vector<double> get_avg_aim();
+    vector<double> get_best_aim();
 private:
-    int city,ants,max_iter,Q;//蚂蚁个数、最大迭代次数、信息素增加强度系数
-    float alpha,beta,rho;//信息启发因子、期望启发因子、信息素挥发因子
+    int city{},ants{},max_iter{},Q{};//蚂蚁个数、最大迭代次数、信息素增加强度系数
+    double alpha{},beta{},rho{};//信息启发因子、期望启发因子、信息素挥发因子
     vector<vector<int>> position;//位置矩阵
     vector<vector<double>> distance;//距离矩阵
     vector<vector<double>> message;//信息素矩阵

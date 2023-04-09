@@ -1,5 +1,6 @@
 #include "tspwindow.h"
 #include "ant_colony.h"
+#include "genetic.h"
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
@@ -18,9 +19,10 @@ int main(int argc, char *argv[])
         }
     }
     TSPWindow w;
-    //w.show();
-    ant_colony ant_tsp=ant_colony(48,10,40,1000,1,4,0.2);
-    ant_tsp.init();
-    ant_tsp.run();
+    w.show();
+    genetic gen=genetic(48,100,400,4,0.1);
+    gen.init();
+    gen.run();
+    gen.output();
     return a.exec();
 }
