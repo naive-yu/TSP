@@ -11,14 +11,17 @@
 #include "resource.h"
 
 using namespace std;
-class genetic {
+class Genetic {
 public:
-    genetic();
-    explicit genetic(int city,int individual_num,int max_iter,int cross_num,double mutate_prob);
+    Genetic();
+    explicit Genetic(int city, int individual_num, int max_iter, int cross_num, double mutate_prob);
     void init();
     void run();
-    void output();
-
+    QString output();
+    vector<vector<int>> *get_route();
+    vector<double> *get_best_aim();
+    vector<double> *get_avg_aim();
+    ~Genetic();
 private:
     int city{},individual_num{},max_iter{},cross_num{};//城市数量、种群数量、最大迭代次数
     double mutate_prob{};//变异概率
@@ -32,8 +35,8 @@ private:
     vector<double> best_aim;//每次迭代最短行程距离
     vector<int> search(vector<int> &individual, vector<int> &temp) const;
     vector<double> get_fitness(vector<vector<int>> &all_individuals);
-    bool isError(vector<int> &individual);
-    bool isExist(int c,vector<int> t);
+    bool isError(vector<int> &individual) const;
+    bool isExist(int c,vector<int> t) const;
     void cross();
     void mutate();
     void select();

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
+    <width>818</width>
     <height>600</height>
    </rect>
   </property>
@@ -17,35 +17,52 @@
    <widget class="QWidget" name="widget" native="true">
     <property name="geometry">
      <rect>
-      <x>-1</x>
+      <x>9</x>
       <y>-1</y>
-      <width>401</width>
-      <height>551</height>
+      <width>801</width>
+      <height>381</height>
      </rect>
     </property>
-    <widget class="QPushButton" name="pushButton">
-     <property name="geometry">
-      <rect>
-       <x>160</x>
-       <y>490</y>
-       <width>75</width>
-       <height>24</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>开始</string>
-     </property>
-    </widget>
    </widget>
-   <widget class="QWidget" name="widget_2" native="true">
+   <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>399</x>
-      <y>-1</y>
-      <width>401</width>
-      <height>551</height>
+      <x>-1</x>
+      <y>379</y>
+      <width>821</width>
+      <height>171</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="title">
+     <string>输出</string>
+    </property>
+    <property name="flat">
+     <bool>false</bool>
+    </property>
+    <property name="checkable">
+     <bool>false</bool>
+    </property>
+    <widget class="QListWidget" name="listWidget">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>801</width>
+       <height>151</height>
+      </rect>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="autoScrollMargin">
+      <number>6</number>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -53,28 +70,144 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>818</width>
      <height>22</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="menu_2">
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
     <property name="title">
      <string>算法</string>
     </property>
+    <widget class="QMenu" name="menu_3">
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="title">
+      <string>蚁群算法</string>
+     </property>
+     <addaction name="action211"/>
+     <addaction name="action212"/>
+    </widget>
+    <widget class="QMenu" name="menu_4">
+     <property name="title">
+      <string>遗传算法</string>
+     </property>
+     <addaction name="action221"/>
+     <addaction name="action222"/>
+    </widget>
+    <addaction name="menu_3"/>
+    <addaction name="menu_4"/>
    </widget>
-   <widget class="QMenu" name="menu_2">
+   <widget class="QMenu" name="menu_1">
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
     <property name="title">
      <string>数据集</string>
     </property>
+    <addaction name="action11"/>
+    <addaction name="action12"/>
    </widget>
-   <addaction name="menu"/>
+   <addaction name="menu_1"/>
    <addaction name="menu_2"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </widget>
+  <action name="action11">
+   <property name="text">
+    <string>att48</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="action12">
+   <property name="text">
+    <string>st70</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="action211">
+   <property name="text">
+    <string>直接运行</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="action212">
+   <property name="text">
+    <string>运行并演示</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="action221">
+   <property name="text">
+    <string>直接运行</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="action222">
+   <property name="text">
+    <string>运行并演示</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
  </widget>
- <tabstops>
-  <tabstop>pushButton</tabstop>
- </tabstops>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>menubar</sender>
+   <signal>triggered(QAction*)</signal>
+   <receiver>TSPWindow</receiver>
+   <slot>deal_menu(QAction*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>117</x>
+     <y>11</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>118</x>
+     <y>-27</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>deal_menu(QAction*)</slot>
+ </slots>
 </ui>

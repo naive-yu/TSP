@@ -5,15 +5,15 @@
 #include<iostream>
 #include<cmath>
 #include <qDebug>
-#include "genetic.h"
+#include "Genetic.h"
 
 using namespace std;
-genetic::genetic() = default;
-genetic::genetic(int city, int individual_num, int max_iter, int cross_num, double mutate_prob)
+Genetic::Genetic() = default;
+Genetic::Genetic(int city, int individual_num, int max_iter, int cross_num, double mutate_prob)
 :city(city),individual_num(individual_num),max_iter(max_iter),cross_num(cross_num),mutate_prob(mutate_prob){
 }
 
-void genetic::init() {
+void Genetic::init() {
     if(city==48)position=att48_position;
     else if(city==70)position=st70_position;
     else cout<<"城市数量异常！";
@@ -38,7 +38,7 @@ void genetic::init() {
     best_aim.resize(max_iter);
 }
 
-void genetic::run() {
+void Genetic::run() {
     //生成初始种群
     static default_random_engine e(0);
     for(int j=0;j<individual_num;j++){
@@ -90,7 +90,7 @@ void genetic::run() {
     }
 }
 
-vector<int> genetic::search(vector<int> &individual,vector<int> &temp) const{
+vector<int> Genetic::search(vector<int> &individual, vector<int> &temp) const{
     vector<int> index;
     for(int i=0;i<cross_num;i++){
         for(int j=0;j<city;j++){
@@ -103,7 +103,7 @@ vector<int> genetic::search(vector<int> &individual,vector<int> &temp) const{
     return index;
 }
 
-vector<double> genetic::get_fitness(vector<vector<int>> &all_individuals) {
+vector<double> Genetic::get_fitness(vector<vector<int>> &all_individuals) {
     vector<double> fitness;
     double dis_sum=0;
     for(vector<int> &route:all_individuals){
@@ -117,7 +117,7 @@ vector<double> genetic::get_fitness(vector<vector<int>> &all_individuals) {
     return fitness;
 }
 
-void genetic::cross() {
+void Genetic::cross() {
     static default_random_engine e(0);
     for(int i=0;i<individual_num/2;i++){
         //i和individual_num-i-1
@@ -182,7 +182,7 @@ void genetic::cross() {
     }
 }
 
-void genetic::mutate() {
+void Genetic::mutate() {
     //采用基于位置的变异
     static default_random_engine e(0);
     static uniform_real_distribution<double> u1(0,1);
@@ -200,11 +200,11 @@ void genetic::mutate() {
     }
 }
 
-void genetic::select() {
+void Genetic::select() {
     //合并新旧种群
     //35800，individuals优先,参数48,100,400,4,0.1
-    vector<vector<int>> all_individuals = individuals;
-    all_individuals.insert(all_individuals.end(),individuals_t.begin(),individuals_t.end());
+    vector<vector<int>> all_individuals = individuals_t;
+    all_individuals.insert(all_individuals.end(),individuals.begin(),individuals.end());
     //计算种群适应度
     vector<double> fitness=get_fitness(all_individuals);
     //使用轮盘赌算法
@@ -236,7 +236,7 @@ void genetic::select() {
     }
 }
 
-void genetic::output() {
+QString Genetic::output() {
     //找到最短路径
     int index = 0;
     double best = best_aim[0];
@@ -247,22 +247,27 @@ void genetic::output() {
         }
     }
     //输出结果
-    cout << "我的最短环路距离：" << best_aim[index] << endl;
+    cout << "遗传算法：我的最短环路距离：" << best_aim[index] << endl;
     cout << "我的最短环路：";
     for (int i = 0; i < city; i++) {
         cout << best_route[index][i] << "->";
     }
     cout << endl;
+    QString res=QString("遗传算法：我的最短环路距离：%1\n我的最短环路：").arg(best_aim[index]);
+    for (int i = 0; i < city; i++) {
+        res.append(QString("%1->").arg(best_route[index][i]+1));
+    }
+    return res;
 }
 
-bool genetic::isExist(int c, vector<int> t) {
+bool Genetic::isExist(int c, vector<int> t) const {
     for(int i=0;i<cross_num;i++){
         if(t[i]==c)return true;
     }
     return false;
 }
 
-bool genetic::isError(vector<int> &individual) {
+bool Genetic::isError(vector<int> &individual) const {
     vector<bool> visit(city);
     for(int i=0;i<city;i++){
         if(visit[individual[i]])return true;
@@ -270,6 +275,20 @@ bool genetic::isError(vector<int> &individual) {
     }
     return false;
 }
+
+vector<vector<int>> *Genetic::get_route() {
+    return &best_route;
+}
+
+vector<double> *Genetic::get_best_aim() {
+    return &best_aim;
+}
+
+vector<double> *Genetic::get_avg_aim() {
+    return &avg_aim;
+}
+
+Genetic::~Genetic() = default;
 
 
 

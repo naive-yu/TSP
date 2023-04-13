@@ -7,20 +7,21 @@
 #define INF 1000000
 #include<string>
 #include<vector>
+#include <QString>
 #include"resource.h"
 
 using namespace std;
-class ant_colony {
+class Ant_colony {
 public:
-    ant_colony(int city,int ants,int max_iter,int Q,double alpha,double beta,double rho);
-    ant_colony();
+    Ant_colony(int city, int ants, int max_iter, int Q, double alpha, double beta, double rho);
+    Ant_colony();
     void init();
     void run();
-    void output();
-    vector<vector<int>> get_position();
-    vector<vector<int>> get_best_route();
-    vector<double> get_avg_aim();
-    vector<double> get_best_aim();
+    QString output();
+    vector<double> *get_avg_aim();
+    vector<double> *get_best_aim();
+    vector<vector<int>> *get_route();
+    ~Ant_colony();
 private:
     int city{},ants{},max_iter{},Q{};//蚂蚁个数、最大迭代次数、信息素增加强度系数
     double alpha{},beta{},rho{};//信息启发因子、期望启发因子、信息素挥发因子

@@ -2,7 +2,12 @@
 #define TSPWINDOW_H
 
 #include <QMainWindow>
-#include "ant_colony.h"
+#include "Ant_colony.h"
+#include "Genetic.h"
+#include "resource.h"
+#include<iostream>
+#include<QTimer>
+#include "dialog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class TSPWindow; }
@@ -13,15 +18,21 @@ class TSPWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    TSPWindow(QWidget *parent = nullptr);
-    ~TSPWindow();
+    explicit TSPWindow(QWidget *parent = nullptr);
+    ~TSPWindow() override;
 
 private slots:
-    void on_pushButton_clicked();
-
+    void deal_menu(QAction*);
+    void show_route();
 private:
     Ui::TSPWindow *ui;
-    ant_colony antTsp;
-    void paintEvent(QPaintEvent *event);
+    int cur_algorithm{};
+    Ant_colony antTsp;
+    Genetic gen;
+    vector<vector<int>> position;
+    vector<int> route;
+    void paintEvent(QPaintEvent *event) override;
+    int city{},index{},max_iter{};
+    QTimer *timer{};
 };
 #endif // TSPWINDOW_H

@@ -20,9 +20,16 @@ set(PROJECT_SOURCES
         tspwindow.h
         tspwindow.ui
         ${TS_FILES}
-        ant_colony.cpp
-        ant_colony.h
-        resource.h genetic.cpp genetic.h)
+        Ant_colony.cpp
+        Ant_colony.h
+        resource.h
+        Genetic.cpp
+        Genetic.h
+        dialog.h
+        dialog.cpp
+        ui_dialog.h
+        dialog.ui
+        Particle.cpp Particle.h)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(TSP
