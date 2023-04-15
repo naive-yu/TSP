@@ -124,12 +124,12 @@ QString Ant_colony::output() {
         }
     }
     //输出结果
-    cout << "蚁群算法：我的最短环路距离：" << best_aim[index] << endl;
-    cout << "我的最短环路：";
-    for (int i = 0; i < city; i++) {
-        cout << best_route[index][i]+1 << "->";
-    }
-    cout << endl;
+    //cout << "蚁群算法：我的最短环路距离：" << best_aim[index] << endl;
+    //cout << "我的最短环路：";
+//    for (int i = 0; i < city; i++) {
+//        cout << best_route[index][i]+1 << "->";
+//    }
+//    cout << endl;
     QString res=QString("蚁群算法：我的最短环路距离：%1\n我的最短环路：").arg(best_aim[index]);
     for (int i = 0; i < city; i++) {
         res.append(QString("%1->").arg(best_route[index][i]+1));

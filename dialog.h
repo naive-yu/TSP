@@ -25,7 +25,7 @@ private:
     Ui::Dialog *ui;
     vector<double> *best{};
     vector<double> *avg{};
-    void paint_axis(QPainter *painter,double y_scale,double y_start);
+    void paint_axis(QPainter *painter,double y_scale,double y_start,double x_scale);
 };
 
 #endif // DIALOG_H

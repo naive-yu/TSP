@@ -7,6 +7,8 @@
 
 
 class Particle {
+public:
+    Particle();
 
 };
 

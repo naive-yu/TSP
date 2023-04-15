@@ -50,8 +50,11 @@ void TSPWindow::deal_menu(QAction *action) {
         dialog->init(antTsp.get_best_aim(),antTsp.get_avg_aim());
         dialog->show();
     }else if(action->objectName()=="action212"){
+        //90 10000 10 4 0
+        //100 1000 10 6 2:33600.56
+        //80 1000 10 6 4:33710.99
+        //110 1000 5 4 1:33523.7
         index=0;
-        max_iter=200;
         cur_algorithm=1;
         if(city==48){
             max_iter=250;
@@ -67,7 +70,7 @@ void TSPWindow::deal_menu(QAction *action) {
         connect(timer,SIGNAL(timeout()),this,SLOT(show_route()));
         timer->start(100);
     }else if(action->objectName()=="action221"){
-        max_iter=400;
+        max_iter=250;
         gen=Genetic(city, 100, max_iter, 4, 0.1);
         gen.init();
         gen.run();

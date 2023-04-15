@@ -29,7 +29,10 @@ set(PROJECT_SOURCES
         dialog.cpp
         ui_dialog.h
         dialog.ui
-        Particle.cpp Particle.h)
+        Particle.cpp
+        Particle.h
+        Helper.cpp
+        Helper.h)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(TSP

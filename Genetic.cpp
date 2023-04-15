@@ -16,7 +16,7 @@ Genetic::Genetic(int city, int individual_num, int max_iter, int cross_num, doub
 void Genetic::init() {
     if(city==48)position=att48_position;
     else if(city==70)position=st70_position;
-    else cout<<"城市数量异常！";
+    //else cout<<"城市数量异常！";
     //城市距离初始化
     distance.resize(city);
     for(int i=0;i<city;i++)distance[i].resize(city);
@@ -40,7 +40,7 @@ void Genetic::init() {
 
 void Genetic::run() {
     //生成初始种群
-    static default_random_engine e(0);
+    default_random_engine e(0);
     for(int j=0;j<individual_num;j++){
         //依据贪心思路构建
         vector<int> route(city);//路径矩阵
@@ -68,19 +68,19 @@ void Genetic::run() {
     }
     //开始遗传算法
     for(int count=0;count<max_iter;count++){
+        //选择
+        select();
         //交叉
         cross();
         //变异
         mutate();
-        //选择
-        select();
         //找出此代最佳路径
         vector<double> fitness= get_fitness(individuals);
         avg_aim[count]=individual_num/accumulate(fitness.begin(),fitness.end(),0.0);
         double max_fitness=0;
         int max_index=-1;
         for(int i=0;i<individual_num;i++){
-            if(fitness[i]>max_fitness){
+            if(fitness[i]> max_fitness){
                 max_fitness=fitness[i];
                 max_index=i;
             }
