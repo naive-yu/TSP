@@ -38,8 +38,8 @@ void TSPWindow::deal_menu(QAction *action) {
             antTsp=Ant_colony(city, 150, max_iter, 1000, 0.5, 4, 0.1);
         }
         else if(city==70){
-            max_iter=500;
-            antTsp=Ant_colony(city, 210, max_iter, 100, 0.5, 5, 0.1);
+            max_iter=400;
+            antTsp=Ant_colony(city, 190, max_iter, 100, 0.4, 6, 0.1);
         }
         antTsp.init();
         antTsp.run();
@@ -70,8 +70,8 @@ void TSPWindow::deal_menu(QAction *action) {
         connect(timer,SIGNAL(timeout()),this,SLOT(show_route()));
         timer->start(100);
     }else if(action->objectName()=="action221"){
-        max_iter=250;
-        gen=Genetic(city, 100, max_iter, 4, 0.1);
+        max_iter=400;
+        gen=Genetic(city, 100, max_iter, 4, 0.2);
         gen.init();
         gen.run();
         route=(*gen.get_route()).back();
@@ -84,9 +84,30 @@ void TSPWindow::deal_menu(QAction *action) {
         index=0;
         max_iter=400;
         cur_algorithm=2;
-        gen=Genetic(city, 100, max_iter, 4, 0.1);
+        gen=Genetic(city, 100, max_iter, 2, 0.1);
         gen.init();
         gen.run();
+        timer=new QTimer(this);
+        connect(timer,SIGNAL(timeout()),this,SLOT(show_route()));
+        timer->start(100);
+    }else if(action->objectName()=="action231"){
+        max_iter=4000;
+        particle=Particle(city,150,max_iter,1,1,0.8,0.2,0.3);
+        particle.init();
+        particle.run();
+        route=(*particle.get_route()).back();
+        update();
+        ui->listWidget->addItem(particle.output());
+        auto *dialog=new Dialog();
+        dialog->init(particle.get_best_aim(),particle.get_avg_aim());
+        dialog->show();
+    }else if(action->objectName()=="action232"){
+        index=0;
+        max_iter=400;
+        cur_algorithm=3;
+        particle=Particle(city,150,max_iter,1,1,0.8,0.1,0.075);
+        particle.init();
+        particle.run();
         timer=new QTimer(this);
         connect(timer,SIGNAL(timeout()),this,SLOT(show_route()));
         timer->start(100);
@@ -97,6 +118,7 @@ void TSPWindow::show_route() {
     //cout<<"show_route"<<endl;
     if(cur_algorithm==1)route=(*antTsp.get_route())[index];
     else if(cur_algorithm==2)route=(*gen.get_route())[index];
+    else if(cur_algorithm==3)route=(*particle.get_route())[index];
     if(index==max_iter-1){
         if(cur_algorithm==1){
             ui->listWidget->addItem(antTsp.output());
@@ -108,6 +130,11 @@ void TSPWindow::show_route() {
             ui->listWidget->addItem(gen.output());
             auto *dialog=new Dialog();
             dialog->init(gen.get_best_aim(),gen.get_avg_aim());
+            dialog->show();
+        }else if(cur_algorithm==3){
+            ui->listWidget->addItem(particle.output());
+            auto *dialog=new Dialog();
+            dialog->init(particle.get_best_aim(),particle.get_avg_aim());
             dialog->show();
         }
         timer->stop();

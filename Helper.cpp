@@ -25,7 +25,9 @@ void Helper::close_stream(ofstream &f){
 }
 
 void Helper::Ant_run() {
-    //测试蚁群算法,48时大概4秒一次，共1260次，20:45开始,23:40结束
+    //测试蚁群算法
+    // att48大概4秒一次，共1260次，20:45开始,23:40结束
+    // st70大概40秒一次，共1260次，0:0开始，15:00结束
     ofstream f_out=get_stream(ant_file);
     for(int ants=180;ants<=240;ants+=10){//120~180
         for(int Q=10;Q<=1000;Q*=10){//100~10000
@@ -35,7 +37,7 @@ void Helper::Ant_run() {
                         Ant_colony antTsp=Ant_colony(city,ants,400,Q,alpha*0.1,beta,rho*0.1);
                         antTsp.init();
                         antTsp.run();
-                        f_out<<ants<<","<<Q<<","<<alpha<<","<<beta<<","<<rho<<","<<antTsp.get_best_aim()->back()<<endl;
+                        f_out<<ants<<","<<Q<<","<<alpha*0.1<<","<<beta<<","<<rho*0.1<<","<<antTsp.get_best_aim()->back()<<endl;
                     }
                 }
             }
@@ -46,14 +48,16 @@ void Helper::Ant_run() {
 
 void Helper::Gen_run() {
     //测试遗传算法
+    // att48大概4秒一次，共1080次，20:45开始,23:40结束
+    // st70大概40秒一次，共1260次，0:0开始，15:00结束
     ofstream f_out= get_stream(gen_file);
-    for(int individual_num=150;individual_num<=200;individual_num+=50){
-        for(int cross_num=3;cross_num<=5;cross_num++){
-            for(int mutate_prob=2;mutate_prob<=5;mutate_prob++){
-                Genetic gen=Genetic(48,individual_num,250,cross_num,mutate_prob*0.1);
+    for(int individual_num=120;individual_num<=180;individual_num+=10){//90~180
+        for (int cross_prob = 2; cross_prob <= 5; cross_prob++){//0.1~0.5
+            for (int mutate_prob = 1; mutate_prob <= 3; mutate_prob++) {//0.1~0.3
+                Genetic gen = Genetic(48, individual_num, 250, cross_prob*0.1, mutate_prob * 0.1);
                 gen.init();
                 gen.run();
-                f_out<<individual_num<<","<<cross_num<<","<<mutate_prob<<endl;
+                f_out << individual_num << ","<< cross_prob*0.1 <<","<< mutate_prob*0.1 << endl;
             }
         }
     }

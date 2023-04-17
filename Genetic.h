@@ -34,6 +34,7 @@ private:
     vector<double> avg_aim;//每次迭代的平均行程距离
     vector<double> best_aim;//每次迭代最短行程距离
     vector<int> search(vector<int> &individual, vector<int> &temp) const;
+    double get_fitness(vector<int> &individual);
     vector<double> get_fitness(vector<vector<int>> &all_individuals);
     bool isError(vector<int> &individual) const;
     bool isExist(int c,vector<int> t) const;

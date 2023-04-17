@@ -16,8 +16,8 @@ Ant_colony::Ant_colony(int city, int ants, int max_iter, int Q, double alpha, do
 }
 
 void Ant_colony::init() {
-    if(city==48)position=att48_position;
-    else if(city==70)position=st70_position;
+    if(city==48)position=&att48_position;
+    else if(city==70)position=&st70_position;
     else cout<<"城市数量异常！";
     //城市距离初始化
     //cout<<position[47][0];
@@ -26,8 +26,8 @@ void Ant_colony::init() {
     for(int i=0;i<city;i++)distance[i].resize(city);
     for(int i=0;i<city;i++){
         for(int j=i+1;j<city;j++){
-            distance[i][j]=sqrt(pow(position[i][0]-position[j][0],2)
-                    +pow(position[i][1]-position[j][1],2));
+            distance[i][j]=sqrt(pow((*position)[i][0]-(*position)[j][0],2)
+                    +pow((*position)[i][1]-(*position) [j][1],2));
             distance[j][i]=distance[i][j];
         }
     }

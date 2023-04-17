@@ -8,6 +8,7 @@
 #include<iostream>
 #include<QTimer>
 #include "dialog.h"
+#include "Particle.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class TSPWindow; }
@@ -29,6 +30,7 @@ private:
     int cur_algorithm{};
     Ant_colony antTsp;
     Genetic gen;
+    Particle particle;
     vector<vector<int>> position;
     vector<int> route;
     void paintEvent(QPaintEvent *event) override;

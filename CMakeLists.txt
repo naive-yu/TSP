@@ -32,7 +32,8 @@ set(PROJECT_SOURCES
         Particle.cpp
         Particle.h
         Helper.cpp
-        Helper.h)
+        Helper.h
+        )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(TSP

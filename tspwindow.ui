@@ -102,8 +102,16 @@
      <addaction name="action221"/>
      <addaction name="action222"/>
     </widget>
+    <widget class="QMenu" name="menuParticle">
+     <property name="title">
+      <string>粒子群优化算法</string>
+     </property>
+     <addaction name="action231"/>
+     <addaction name="action232"/>
+    </widget>
     <addaction name="menu_3"/>
     <addaction name="menu_4"/>
+    <addaction name="menuParticle"/>
    </widget>
    <widget class="QMenu" name="menu_1">
     <property name="font">
@@ -185,6 +193,16 @@
     <font>
      <pointsize>10</pointsize>
     </font>
+   </property>
+  </action>
+  <action name="action231">
+   <property name="text">
+    <string>直接运行</string>
+   </property>
+  </action>
+  <action name="action232">
+   <property name="text">
+    <string>运行并演示</string>
    </property>
   </action>
  </widget>
