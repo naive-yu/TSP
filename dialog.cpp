@@ -16,37 +16,36 @@ void Dialog::paintEvent(QPaintEvent *event) {
     if(!this->isHidden()){
         //绘制坐标轴
         int sz=(int)best->size();
-        //cout<<best->size()<<" "<<avg->size()<<endl;
         double mini=1000000;
         double maxi=0;
         for(int i=0;i<sz;i++){
             (*best)[i]=min((*best)[i],mini);
             maxi=max(maxi,(*avg)[i]);
         }
+        maxi=max(maxi,(*best)[0]);
         int width=this->width();
         int height=this->height();
         QPainter painter=QPainter(this);
-        double y_scale=(height-90)/(maxi-(*best)[sz-1]);
+        double y_scale=(height-100)/(maxi-(*best)[sz-1]);
         double y_start=(*best)[sz-1];
-        double x_scale=(width-90)/(sz+0.0);//max_iter
+        double x_scale=(width-100)/(sz+0.0);//max_iter
         paint_axis(&painter,y_scale,y_start,x_scale);
-
-        //画最短环路距离
+        //画最短环路距离曲线
+        painter.setWindow(0,height,width,-height);//数学坐标系
         painter.setPen(QPen(Qt::red,2));
         QPoint start,end;
-        painter.setWindow(0,height,width,-height);//数学坐标系
-        start=QPoint(50,(int)(52+((*best)[0]-(*best)[sz-1])*y_scale));
+        start=QPoint(50,round(51+((*best)[0]-y_start)*y_scale));
         for(int i=1;i<sz;i++){
-            end=QPoint((int)(i*x_scale)+50,(int)(52+((*best)[i]-(*best)[sz-1])*y_scale));
+            end=QPoint((int)(i*x_scale)+50,round(51+((*best)[i]-y_start)*y_scale));
             painter.drawLine(start,end);
             start=end;
         }
 
-        //画平均环路距离
+        //画平均环路距离曲线
         painter.setPen(QPen(Qt::green,2));
-        start=QPoint(50,(int)(52+((*avg)[0]-(*best)[sz-1])*y_scale));
+        start=QPoint(50,round(51+((*avg)[0]-y_start)*y_scale));
         for(int i=1;i<sz;i++){
-            end=QPoint((int)(i*x_scale)+50,(int)(52+((*avg)[i]-(*best)[sz-1])*y_scale));
+            end=QPoint((int)(i*x_scale)+50,round(51+((*avg)[i]-y_start)*y_scale));
             painter.drawLine(start,end);
             start=end;
         }
@@ -60,89 +59,81 @@ void Dialog::init(vector<double> *a, vector<double> *b) {
 }
 
 void Dialog::paint_axis(QPainter *painter,double y_scale,double y_start,double x_scale) {
-    QPoint m_ptStartPos=QPoint(50,50);
-    int m_axisWidth = width()-90,m_axisHeight = height()-90;
-    QPen pen;
-    pen.setColor(Qt::black);
-    painter->setPen(pen);
-    painter->setWindow(0,height(),width(),-height());
-    QPoint axisStartPoint;
-    QPoint axisXEndPoint; // x 轴终点
-    QPoint axisYEndPoint; // y 轴终点
+    QPoint StartPos=QPoint(50, 50);
+    int axisWidth = width() - 100,axisHeight = height() - 100;//600X500的绘图区域
+    painter->setPen(QPen(Qt::black,1));
+    painter->setWindow(0,height(),width(),-height());//数字坐标系
+    QPoint StartPoint;
+    QPoint XEndPoint; // x 轴终点
+    QPoint YEndPoint; // y 轴终点
 
-    axisStartPoint.setX(m_ptStartPos.x());
-    axisStartPoint.setY(m_ptStartPos.y());
+    StartPoint.setX(StartPos.x());
+    StartPoint.setY(StartPos.y());
 
-    axisXEndPoint.setX(m_ptStartPos.x() + m_axisWidth+10);
-    axisXEndPoint.setY(m_ptStartPos.y());
+    XEndPoint.setX(StartPos.x() + axisWidth+30);
+    XEndPoint.setY(StartPos.y());
 
-    axisYEndPoint.setX(m_ptStartPos.x());
-    axisYEndPoint.setY(m_ptStartPos.y() + m_axisHeight+10);
-
-    painter->drawLine(axisStartPoint, axisXEndPoint);
-    painter->drawLine(axisStartPoint, axisYEndPoint);
-
-
-    int deltaX = m_axisWidth / 25;  // X 轴坐标刻度宽度
-    int deltaY = m_axisHeight / 16; // Y 轴坐标刻度宽度
-
-    for (int i = m_ptStartPos.x()+ deltaX; i <= m_axisWidth + m_ptStartPos.x(); i = i + deltaX )
-    {
+    YEndPoint.setX(StartPos.x());
+    YEndPoint.setY(StartPos.y() + axisHeight+30);
+    //x，y轴
+    painter->drawLine(StartPoint, XEndPoint);
+    painter->drawLine(StartPoint, YEndPoint);
+    //绘制剪头
+    painter->drawLine(XEndPoint+QPoint(-8,3), XEndPoint);
+    painter->drawLine(XEndPoint+QPoint(-8,-3), XEndPoint);
+    painter->drawLine(YEndPoint+QPoint(-3,-8), YEndPoint);
+    painter->drawLine(YEndPoint+QPoint(3,-8), YEndPoint);
+    //画刻度
+    int deltaX = axisWidth/10;  // X 轴坐标刻度宽度,600/10
+    int deltaY = axisHeight/10; // Y 轴坐标刻度宽度,500/10
+    painter->setPen(QPen(Qt::black,1));
+    for(int i=deltaX;i<=axisWidth;i=i+deltaX){
         // 横坐标位置每次递增
-
         // 坐标刻度起始点
-        QPoint calibrationStartPoint;
-        calibrationStartPoint.setX(i);
-        calibrationStartPoint.setY(m_ptStartPos.y());
-
+        QPoint cal_start;
+        cal_start.setX(i+StartPos.x());
+        cal_start.setY(StartPos.y());
         // 坐标刻度结束点
-        QPoint calibrationEndPoint;
-        calibrationEndPoint.setX(i);
-        calibrationEndPoint.setY(m_ptStartPos.y() - 4);
-
-        painter->drawLine(calibrationStartPoint, calibrationEndPoint);
+        QPoint cali_end;
+        cali_end.setX(i+StartPos.x());
+        cali_end.setY(StartPos.y()-4);
+        painter->drawLine(cal_start, cali_end);
     }
-
-    for (int i = m_ptStartPos.y() + deltaY; i <= m_axisHeight + m_ptStartPos.y(); i = i + deltaY)
-    {
+    for(int i=deltaY;i<=axisHeight;i=i+deltaY){
         // 坐标刻度起始点
-        QPoint calibrationStartPoint;
-        calibrationStartPoint.setX(m_ptStartPos.x()); // x 轴不变，y 轴变
-        calibrationStartPoint.setY(i);
-
+        QPoint cal_start;
+        cal_start.setX(StartPos.x()); // x 轴不变，y 轴变
+        cal_start.setY(i + StartPos.y());
         // 坐标刻度结束点
-        QPoint calibrationEndPoint;
-        calibrationEndPoint.setX(m_ptStartPos.x() - 4);
-        calibrationEndPoint.setY(i);
-
-        painter->drawLine(calibrationStartPoint, calibrationEndPoint);
+        QPoint cali_end;
+        cali_end.setX(StartPos.x() - 4);
+        cali_end.setY(i + StartPos.y());
+        painter->drawLine(cal_start, cali_end);
     }
-
-
-    int axisXValue = 0;
-    int axisYValue = 0;
-
-    painter->setWindow(0, 0, this->width(), this->height()); // 必须恢复原来的坐标系，不然文字会镜像
-
-    for (int i = m_ptStartPos.x(); i <= m_axisWidth + m_ptStartPos.x(); )
-    {
-        i = i + deltaX;
-        QString strAxisXValue = QString::number((int)(axisXValue/x_scale));
+    //画刻度值
+    painter->setWindow(0,0,this->width(),this->height()); //必须恢复原来的坐标系，不然文字会镜像
+    for (int i=0;i<=axisWidth;i=i+deltaX){
+        QString str=QString::number(round(i/x_scale));
         QPoint temp;
-        temp.setX(i - m_ptStartPos.x() + 13); // 左边移动的偏移量
-        temp.setY(height() + 18 - m_ptStartPos.y());
-        painter->drawText(temp, strAxisXValue);
-        axisXValue = axisXValue + 25;
+        temp.setX(i+42); //右边移动的偏移量
+        temp.setY(height()+18-StartPos.y());
+        painter->drawText(temp, str);
     }
-
-    for (int i = 0; i <= m_axisHeight; i = i + deltaY)
-    {
-        //QString strAxisYValue = QString::number(axisYValue);
+    painter->drawText(QPoint(25+axisWidth/2,height()-15),"迭代次数");
+    for (int i=0;i<=axisHeight; i=i+deltaY){
+        QString str=QString::number(round(y_start+i/y_scale),'g',4);
+        int index=str.indexOf('e');
+        str=str.mid(0,index);
         QPoint temp;
-        temp.setX(m_ptStartPos.x() - 43);         // 左边移动的偏移量
-        temp.setY(height() - m_ptStartPos.y() - i + 3);
-        painter->drawText(temp, QString::number((int)(y_start+2*axisYValue/y_scale)));
-        axisYValue = axisYValue + 16;
+        temp.setX(StartPos.x()-38);         // 左边移动的偏移量
+        temp.setY(height()-StartPos.y()-i+4);
+        painter->drawText(temp,str);
+    }
+    int mici=0;
+    QString str2=QString::number(round(y_start),'g',4);
+    if(str2.size()>4){
+        mici=((QString)str2.back()).toInt();
+        painter->drawText(QPoint(58,26),QString("x10^%1").arg(mici));
     }
 }
 

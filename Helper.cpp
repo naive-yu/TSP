@@ -28,16 +28,27 @@ void Helper::Ant_run() {
     //测试蚁群算法
     // att48大概4秒一次，共1260次，20:45开始,23:40结束
     // st70大概40秒一次，共1260次，0:0开始，15:00结束
+    //新：att48大概00秒一次，共960次，
+    double mini,maxi,avg,result;
     ofstream f_out=get_stream(ant_file);
-    for(int ants=180;ants<=240;ants+=10){//120~180
-        for(int Q=10;Q<=1000;Q*=10){//100~10000
-            for(int alpha=4;alpha<=13;alpha+=3){//0.4~1.4
-                for(int beta=2;beta<=6;beta++){//2~6
+    for(int ants=140;ants<=140;ants+=10){//140/210
+        for(int Q=10;Q<=10000;Q*=10){//100~10000
+            for(int alpha=4;alpha<=13;alpha+=3){//0.4~1.3
+                for(int beta=3;beta<=6;beta++){//3~6
                     for(int rho=1;rho<=3;rho++){//0.1~0.3
-                        Ant_colony antTsp=Ant_colony(city,ants,400,Q,alpha*0.1,beta,rho*0.1);
-                        antTsp.init();
-                        antTsp.run();
-                        f_out<<ants<<","<<Q<<","<<alpha*0.1<<","<<beta<<","<<rho*0.1<<","<<antTsp.get_best_aim()->back()<<endl;
+                        f_out<<ants<<","<<Q<<","<<alpha*0.1<<","<<beta<<","<<rho*0.1<<",";
+                        mini=INF,maxi=0,avg=0;
+                        for(int i=0;i<5;i++){
+                            Ant_colony antTsp=Ant_colony(city,ants,400,Q,alpha*0.1,beta,rho*0.1);
+                            antTsp.init();
+                            antTsp.run();
+                            result=antTsp.get_best_aim()->back();
+                            mini=min(mini,result);
+                            maxi=max(maxi,result);
+                            avg+=result;
+                        }
+                        avg/=5.0;
+                        f_out<<maxi<<","<<mini<<","<<avg<<endl;
                     }
                 }
             }

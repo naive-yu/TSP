@@ -28,8 +28,8 @@ public:
 private:
     int city{}, particle_num{}, max_iter{};//城市数、粒子个数、最大迭代次数
     double w{}, max_w{}, min_w{}, c1{}, c2{};//惯性因子、个体学习因子、社会学习因子
-    const vector <vector<int>> *position{};//位置矩阵
-    vector <vector<double>> distance;//距离矩阵
+    //const vector <vector<int>> *position{};//位置矩阵
+    const vector <vector<float>> *distance{};//距离矩阵
     vector<vector<int>> particles_best;
     vector<vector<int>> particles;
     double get_length(vector<int> &route);

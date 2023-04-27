@@ -10,23 +10,20 @@
 using namespace std;
 Genetic::Genetic() = default;
 Genetic::Genetic(int city, int individual_num, int max_iter, int cross_num, double mutate_prob)
-        :city(city),individual_num(individual_num),max_iter(max_iter),cross_num(cross_num),mutate_prob(mutate_prob){
+:city(city),individual_num(individual_num),max_iter(max_iter),cross_num(cross_num),mutate_prob(mutate_prob){
+    init();
 }
 
 void Genetic::init() {
-    if(city==48)position=att48_position;
-    else if(city==70)position=st70_position;
-    else cout<<"城市数量异常！";
-    //城市距离初始化
-    distance.resize(city);
-    for(int i=0;i<city;i++)distance[i].resize(city);
-    for(int i=0;i<city;i++) {
-        for (int j = i + 1; j < city; j++) {
-            distance[i][j] = sqrt(pow(position[i][0] - position[j][0], 2)
-                                  + pow(position[i][1] - position[j][1], 2));
-            distance[j][i] = distance[i][j];
-        }
+    if(city==48){
+        //position=att48_position;
+        distance=&att48_distance;
     }
+    else if(city==70){
+        //position=st70_position;
+        distance=&st70_distance;
+    }
+    else cout<<"城市数量异常！";
     //开辟空间
     individuals.resize(individual_num);
     for(int i=0;i<individual_num;i++)individuals[i].resize(city);
@@ -40,31 +37,40 @@ void Genetic::init() {
 
 void Genetic::run() {
     //生成初始种群
-    default_random_engine e(0);
-    for(int j=0;j<individual_num;j++){
-        //依据贪心思路构建
-        vector<int> route(city);//路径矩阵
-        vector<bool> visit(city);//访问矩阵
-        uniform_int_distribution<signed> u(0,city-1);
-        route[0]=u(e);
-        visit[route[0]]=true;
-        individuals[j][0]=route[0];
-        individuals_t[j][0]=route[0];
-        for(int i=1;i<city;i++){
-            //找到距离最近的城市
-            int index=-1;
-            double best=INF;
-            for(int k=0;k<city;k++){
-                if(!visit[k]&&distance[route[i-1]][k]<best){
-                    index=k;
-                    best=distance[route[i-1]][k];
-                }
-            }
-            route[i]=index;
-            individuals[j][i]=index;
-            individuals_t[j][i]=index;
-            visit[index]=true;
-        }
+    //依据贪心思路构建
+//    random_device rd;
+//    default_random_engine e(rd());
+//    for(int j=0;j<individual_num;j++){
+//        vector<int> route(city);//路径矩阵
+//        vector<bool> visit(city);//访问矩阵
+//        uniform_int_distribution<signed> u(0,city-1);
+//        route[0]=u(e);
+//        visit[route[0]]=true;
+//        individuals[j][0]=route[0];
+//        individuals_t[j][0]=route[0];
+//        for(int i=1;i<city;i++){
+//            //找到距离最近的城市
+//            int index=-1;
+//            double best=INF;
+//            for(int k=0;k<city;k++){
+//                if(!visit[k]&&(*distance)[route[i-1]][k]<best){
+//                    index=k;
+//                    best=(*distance)[route[i-1]][k];
+//                }
+//            }
+//            route[i]=index;
+//            individuals[j][i]=index;
+//            individuals_t[j][i]=index;
+//            visit[index]=true;
+//        }
+//    }
+    //随机构建
+    vector<int> route(city);
+    for(int i=0;i<city;i++)route[i]=i;
+    for(int i=0;i<individual_num;i++){
+        individuals[i]=route;
+        individuals_t[i]=route;
+        shuffle(route.begin(),route.end(), std::mt19937(std::random_device()()));
     }
     //开始遗传算法
     for(int count=0;count<max_iter;count++){
@@ -91,11 +97,11 @@ void Genetic::run() {
 }
 
 vector<int> Genetic::search(vector<int> &individual, vector<int> &temp) const{
-    vector<int> index;
+    vector<int> index(cross_num);
     for(int i=0;i<cross_num;i++){
         for(int j=0;j<city;j++){
             if(individual[j]==temp[i]){
-                index.push_back(j);
+                index[i]=j;
                 break;
             }
         }
@@ -104,9 +110,9 @@ vector<int> Genetic::search(vector<int> &individual, vector<int> &temp) const{
 }
 
 double Genetic::get_fitness(vector<int> &route) {
-    double dis=distance[route[city-1]][route[0]];
+    double dis=(*distance)[route[city-1]][route[0]];
     for(int i=0;i<city-1;i++){
-        dis+=distance[route[i]][route[i+1]];
+        dis+=(*distance)[route[i]][route[i+1]];
     }
     return 1.0/dis;
 }
@@ -116,9 +122,9 @@ vector<double> Genetic::get_fitness(vector<vector<int>> &all_individuals) {
     int index=0;
     double dis;
     for(vector<int> &route:all_individuals){
-        dis=distance[route[city-1]][route[0]];
+        dis=(*distance)[route[city-1]][route[0]];
         for(int i=0;i<city-1;i++){
-            dis+=distance[route[i]][route[i+1]];
+            dis+=(*distance)[route[i]][route[i+1]];
         }
         fitness[index++]=1.0/dis;
     }
@@ -126,8 +132,8 @@ vector<double> Genetic::get_fitness(vector<vector<int>> &all_individuals) {
 }
 
 void Genetic::cross() {
-    default_random_engine e(0);
-
+    //random_device rd;
+    default_random_engine e(time(0));
     for(int i=0;i<individual_num/2;i++){
         //i和individual_num-i-1
         uniform_int_distribution<signed> u(0,city-1);
@@ -193,7 +199,8 @@ void Genetic::cross() {
 
 void Genetic::mutate() {
     //采用基于位置的变异
-    default_random_engine e(0);
+    random_device rd;
+    default_random_engine e(rd());
     uniform_real_distribution<double> u1(0,1);
     uniform_int_distribution<signed> u2(0,city-1);
     vector<int> route;
@@ -259,7 +266,8 @@ void Genetic::select() {
 //    all_individuals.insert(all_individuals.end(),individuals.begin(),individuals.end());
 //    vector<double> fitness=get_fitness(all_individuals);
 //    //使用轮盘赌算法
-//    default_random_engine e(0);
+//    random_device rd;
+//    default_random_engine e(rd());
 //    uniform_real_distribution<double> u(0,1);
 //    double sum=0;
 //    vector<bool> visit(individual_num*2);
@@ -297,16 +305,12 @@ QString Genetic::output() {
             index = i;
         }
     }
-    //输出结果
-    cout << "遗传算法：我的最短环路距离：" << best_aim[index] << endl;
-    cout << "我的最短环路：";
+    QString str="";
+    if(city==48)str="att48";
+    else if(city==70)str="st70";
+    QString res=QString("（遗传算法，%1）我的最短环路距离：%2\n我的最短环路：").arg(str).arg(best_aim[index]);
     for (int i = 0; i < city; i++) {
-        cout << best_route[index][i] << "->";
-    }
-    cout << endl;
-    QString res=QString("遗传算法：我的最短环路距离：%1\n我的最短环路：").arg(best_aim[index]);
-    for (int i = 0; i < city; i++) {
-        res.append(QString("%1->").arg(best_route[index][i]+1));
+        res.append(QString("%1, ").arg(best_route[index][i]+1));
     }
     return res;
 }

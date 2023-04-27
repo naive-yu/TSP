@@ -8,26 +8,24 @@
 Particle::Particle() = default;
 Particle::Particle(int city, int particle_num, int max_iter, double w, double max_w, double min_w, double c1, double c2)
 :city(city),particle_num(particle_num),max_iter(max_iter),w(w),max_w(max_w),min_w(min_w),c1(c1),c2(c2){
+    init();
 }
 
 void Particle::init() {
-    if(city==48)position=&att48_position;
-    else if(city==70)position=&st70_position;
-    else cout<<"城市数量异常！";
-    distance.resize(city);
-    for(int i=0;i<city;i++)distance[i].resize(city);
-    for(int i=0;i<city;i++){
-        for(int j=i+1;j<city;j++){
-            distance[i][j]=sqrt(pow((*position)[i][0]-(*position)[j][0],2)
-                                +pow((*position)[i][1]-(*position) [j][1],2));
-            distance[j][i]=distance[i][j];
-        }
+    if(city==48){
+        //position=att48_position;
+        distance=&att48_distance;
     }
+    else if(city==70){
+        //position=st70_position;
+        distance=&st70_distance;
+    }
+    else cout<<"城市数量异常！";
     particles_best=vector<vector<int>>(particle_num,vector<int>(city));
     particles=vector<vector<int>>(particle_num,vector<int>(city));
-//    particles_best.resize(max_iter);
+//    particles_best.resize(particle_num);
 //    for(int i=0;i<max_iter;i++)particles_best[i].resize(city);
-//    particles.resize(max_iter);
+//    particles.resize(particle_num);
 //    for(int i=0;i<max_iter;i++)particles[i].resize(city);
     best_route.resize(max_iter);
     for(int i=0;i<max_iter;i++)best_route[i].resize(city);
@@ -84,6 +82,8 @@ void Particle::run() {
     best_aim[0]=mini;
     avg_aim[0]= accumulate(lens.begin(),lens.end(),0.0)/particle_num;
     vector<vector<int>> v(particle_num,vector<int>(city));
+    //vector<int> route(city);
+    for(int i=0;i<city;i++)route[i]=i;
     for(int i=0;i<particle_num;i++){
         v[i]=route;
         shuffle(route.begin(),route.end(), std::mt19937(std::random_device()()));
@@ -141,7 +141,7 @@ void Particle::run() {
             }
         }
         //个体极值和群体极值更新
-        lens= get_length(particles);
+        lens=get_length(particles);
         for(int i=0;i<particle_num;i++){
             if(lens[i]<get_length(particles_best[i]))particles_best[i]=particles[i];
         }
@@ -177,16 +177,12 @@ QString Particle::output() {
             index = i;
         }
     }
-    //输出结果
-    //cout << "粒子群优化算法：我的最短环路距离：" << best_aim[index] << endl;
-    //cout << "我的最短环路：";
-//    for (int i = 0; i < city; i++) {
-//        cout << best_route[index][i]+1 << "->";
-//    }
-//    cout << endl;
-    QString res=QString("粒子群优化算法：我的最短环路距离：%1\n我的最短环路：").arg(best_aim[index]);
+    QString str="";
+    if(city==48)str="att48";
+    else if(city==70)str="st70";
+    QString res=QString("（粒子群优化算法，%1）我的最短环路距离：%2\n我的最短环路：").arg(str).arg(best_aim[index]);
     for (int i = 0; i < city; i++) {
-        res.append(QString("%1->").arg(best_route[index][i]+1));
+        res.append(QString("%1, ").arg(best_route[index][i]+1));
     }
     return res;
 }
@@ -204,9 +200,9 @@ vector<vector<int>> *Particle::get_route() {
 }
 
 double Particle::get_length(vector<int> &route) {
-    double len=distance[route[city-1]][route[0]];
+    double len=(*distance)[route[city-1]][route[0]];
     for(int i=0;i<city-1;i++){
-        len+=distance[route[i]][route[i+1]];
+        len+=(*distance)[route[i]][route[i+1]];
     }
     return len;
 }
@@ -214,9 +210,9 @@ double Particle::get_length(vector<int> &route) {
 vector<double> Particle::get_length(vector<vector<int>> &total) {
     vector<double> res;
     for(vector<int> &route:total){
-        double len=distance[route[city-1]][route[0]];
+        double len=(*distance)[route[city-1]][route[0]];
         for(int i=0;i<city-1;i++){
-            len+=distance[route[i]][route[i+1]];
+            len+=(*distance)[route[i]][route[i+1]];
         }
         res.push_back(len);
     }

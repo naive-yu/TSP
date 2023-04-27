@@ -25,9 +25,8 @@ public:
 private:
     int city{},individual_num{},max_iter{},cross_num{};//城市数量、种群数量、最大迭代次数
     double mutate_prob{};//变异概率
-
-    vector<vector<int>> position;//位置矩阵
-    vector<vector<double>> distance;//距离矩阵
+    //vector<vector<int>> position;//位置矩阵
+    const vector<vector<float>> *distance{};//距离矩阵
     vector<vector<int>> individuals;//种群
     vector<vector<int>> individuals_t;//种群
     vector<vector<int>> best_route;//每次迭代最佳路径
@@ -41,7 +40,6 @@ private:
     void cross();
     void mutate();
     void select();
-
 };
 
 
