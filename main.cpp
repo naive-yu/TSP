@@ -20,19 +20,22 @@ int main(int argc, char *argv[])
     }
     //最佳：att48,33523.7085;st70,678.5975
     //最佳：
-    Helper helper=Helper(48);
-    helper.Ant_run();
-    //helper.Gen_run();
-//    TSPWindow w;
-//    w.show();
+    //Helper helper1=Helper(48);
+    //helper1.Gen_run();
+    //Helper helper2=Helper(70);
+    //helper2.Gen_run2();
+    //Helper hepler3=Helper(48);
+    //hepler3.Part_run();
+    TSPWindow w;
+    w.show();
 //    Particle p=Particle(48,150,400,1,1,0.8,0.1,0.075);
 //    p.init();
 //    p.run();
 //    p.output();
-    //Genetic gen=Genetic(48, 100, 250, 2, 0.1);
+    //Genetic gen=Genetic(48, 100, 250, 0.1);
     //gen.init();
     //gen.run();
     //gen.output();
-    return 0;
+    //return 0;
     return a.exec();
 }

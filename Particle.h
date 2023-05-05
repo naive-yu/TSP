@@ -14,11 +14,13 @@
 using namespace  std;
 class Particle {
 public:
-    Particle(int city, int particle, int max_iter, double w, double max_w, double min_w, double c1, double c2);
+    Particle(int city, int particle, int max_iter, double max_w, double min_w, double c1, double c2);
     Particle();
     void init();
-
     void run();
+    void mutate();
+    void cross();
+    void reverse();
     QString output();
     vector<double> *get_avg_aim();
     vector<double> *get_best_aim();
@@ -26,12 +28,14 @@ public:
     ~Particle();
 
 private:
-    int city{}, particle_num{}, max_iter{};//城市数、粒子个数、最大迭代次数
-    double w{}, max_w{}, min_w{}, c1{}, c2{};//惯性因子、个体学习因子、社会学习因子
+    int cnt{},city{}, particle_num{}, max_iter{};//城市数、粒子个数、最大迭代次数
+    double max_w{}, min_w{}, c1{}, c2{};//惯性因子、个体学习因子、社会学习因子
     //const vector <vector<int>> *position{};//位置矩阵
     const vector <vector<float>> *distance{};//距离矩阵
     vector<vector<int>> particles_best;
     vector<vector<int>> particles;
+    bool isExist(int c, vector<int> t) const;
+    vector<int> search(vector<int> &individual, vector<int> &temp) const;
     double get_length(vector<int> &route);
     int find(vector<int> &t,int a) const;
     vector<double> get_length(vector<vector<int>> &total);

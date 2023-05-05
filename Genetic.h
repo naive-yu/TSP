@@ -14,16 +14,17 @@ using namespace std;
 class Genetic {
 public:
     Genetic();
-    explicit Genetic(int city, int individual_num, int max_iter, int cross_num, double mutate_prob);
+    explicit Genetic(int city, int individual_num, int max_iter, double mutate_prob);
     void init();
     void run();
+    void reverse();
     QString output();
     vector<vector<int>> *get_route();
     vector<double> *get_best_aim();
     vector<double> *get_avg_aim();
     ~Genetic();
 private:
-    int city{},individual_num{},max_iter{},cross_num{};//城市数量、种群数量、最大迭代次数
+    int city{},individual_num{},max_iter{};//城市数量、种群数量、最大迭代次数
     double mutate_prob{};//变异概率
     //vector<vector<int>> position;//位置矩阵
     const vector<vector<float>> *distance{};//距离矩阵

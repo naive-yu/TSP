@@ -120,21 +120,31 @@ void Dialog::paint_axis(QPainter *painter,double y_scale,double y_start,double x
         painter->drawText(temp, str);
     }
     painter->drawText(QPoint(25+axisWidth/2,height()-15),"迭代次数");
+    QString str2=QString::number(round(y_start+axisHeight/y_scale),'g',4);
+    int mici=0;
+    if(str2.size()>4){
+        mici=((QString)str2.back()).toInt();
+        painter->drawText(QPoint(58,26),QString("x10^%1").arg(mici));
+    }
     for (int i=0;i<=axisHeight; i=i+deltaY){
         QString str=QString::number(round(y_start+i/y_scale),'g',4);
-        int index=str.indexOf('e');
+        //int cur=((QString)str[-1]).toInt();
+        int index=(int)str.indexOf('e');
+        int cur=str.mid(index+1,3).toInt();
         str=str.mid(0,index);
+        if(cur<mici){
+            QString result="0.";
+            str.remove(".");
+            for(int j=1;j<mici-cur;j++)result+="0";
+            str=result+str;
+        }
+        str=str.mid(0,5);
         QPoint temp;
         temp.setX(StartPos.x()-38);         // 左边移动的偏移量
         temp.setY(height()-StartPos.y()-i+4);
         painter->drawText(temp,str);
     }
-    int mici=0;
-    QString str2=QString::number(round(y_start),'g',4);
-    if(str2.size()>4){
-        mici=((QString)str2.back()).toInt();
-        painter->drawText(QPoint(58,26),QString("x10^%1").arg(mici));
-    }
+
 }
 
 

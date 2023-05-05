@@ -7,6 +7,7 @@
 
 #include "Ant_colony.h"
 #include "Genetic.h"
+#include "Particle.h"
 #include<iostream>
 #include<string>
 #include<fstream>
@@ -17,7 +18,8 @@ public:
     explicit Helper(int city);
     void Ant_run();
     void Gen_run();
-
+    void Gen_run2();
+    void Part_run();
 private:
     string ant_file,gen_file;
     int city;

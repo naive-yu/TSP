@@ -47,7 +47,7 @@ void Ant_colony::init() {
 void Ant_colony::run(){
     //使用随机数引擎
     //random_device rd;
-    cout<<time(0)<<endl;
+    //cout<<time(0)<<endl;
     default_random_engine e(time(0));
     uniform_int_distribution<signed> u(0,city-1);
     uniform_real_distribution<double> u1(0,1);

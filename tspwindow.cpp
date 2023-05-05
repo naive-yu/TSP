@@ -34,12 +34,12 @@ void TSPWindow::deal_menu(QAction *action) {
     if(city==0)ui->statusbar->showMessage("请先选择数据集！");
     else if(action->objectName()=="action211"){
         if(city==48){
-            max_iter=300;
+            max_iter=400;
             antTsp=Ant_colony(city, 150, max_iter, 100, 0.5, 4, 0.1);
         }
         else if(city==70){
-            max_iter=500;
-            antTsp=Ant_colony(city, 190, max_iter, 10, 0.4, 6, 0.1);
+            max_iter=400;
+            antTsp=Ant_colony(city, 210, max_iter, 100, 0.7, 6, 0.1);
         }
         antTsp.run();
         route=(*antTsp.get_route()).back();
@@ -56,20 +56,25 @@ void TSPWindow::deal_menu(QAction *action) {
         index=0;
         cur_algorithm=1;
         if(city==48){
-            max_iter=250;
-            antTsp=Ant_colony(city, 150, max_iter, 1000, 0.5, 4, 0.1);
+            max_iter=400;
+            antTsp=Ant_colony(city, 150, max_iter, 100, 0.5, 4, 0.1);
         }
         else if(city==70){
-            max_iter=500;
-            antTsp=Ant_colony(city, 190, max_iter, 100, 0.4, 6, 0.1);
+            max_iter=400;
+            antTsp=Ant_colony(city, 210, max_iter, 100, 0.7, 6, 0.1);
         }
         antTsp.run();
         timer=new QTimer(this);
         connect(timer,SIGNAL(timeout()),this,SLOT(show_route()));
         timer->start(100);
     }else if(action->objectName()=="action221"){
-        max_iter=40000;
-        gen=Genetic(city, 38, max_iter, 5, 1);
+        if(city==48){
+            max_iter=2000;
+            gen=Genetic(city, 300, max_iter, 0.05);
+        }else if(city==70){
+            max_iter=2000;
+            gen=Genetic(city, 500, max_iter, 0.05);
+        }
         gen.run();
         route=(*gen.get_route()).back();
         update();
@@ -79,16 +84,23 @@ void TSPWindow::deal_menu(QAction *action) {
         dialog->show();
     }else if(action->objectName()=="action222"){
         index=0;
-        max_iter=400;
         cur_algorithm=2;
-        gen=Genetic(city, 100, max_iter, 2, 0.1);
+        if(city==48){
+            max_iter=2000;
+            gen=Genetic(city, 150, max_iter, 0.1);
+        }
+        else if(city==70){
+            max_iter=2000;
+            gen=Genetic(city, 210, max_iter, 0.1);
+        }
         gen.run();
         timer=new QTimer(this);
         connect(timer,SIGNAL(timeout()),this,SLOT(show_route()));
         timer->start(100);
     }else if(action->objectName()=="action231"){
-        max_iter=4000;
-        particle=Particle(city,500,max_iter,1,1,0.8,0.5,0.1);
+        max_iter=1000;
+        //0.8、0.2、0.15
+        particle=Particle(city,2000,max_iter,1,0.8,0.1,0.3);
         particle.run();
         route=(*particle.get_route()).back();
         update();
@@ -100,7 +112,7 @@ void TSPWindow::deal_menu(QAction *action) {
         index=0;
         max_iter=400;
         cur_algorithm=3;
-        particle=Particle(city,200,max_iter,1,1,0.8,0.05,0.05);
+        particle=Particle(city,200,max_iter,1,0.8,0.05,0.05);
         particle.run();
         timer=new QTimer(this);
         connect(timer,SIGNAL(timeout()),this,SLOT(show_route()));
