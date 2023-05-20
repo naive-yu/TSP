@@ -26,7 +26,7 @@ public:
 private:
     int city{},individual_num{},max_iter{};//城市数量、种群数量、最大迭代次数
     double mutate_prob{};//变异概率
-    //vector<vector<int>> position;//位置矩阵
+    vector<vector<int>> position;//位置矩阵
     const vector<vector<float>> *distance{};//距离矩阵
     vector<vector<int>> individuals;//种群
     vector<vector<int>> individuals_t;//种群
@@ -34,6 +34,7 @@ private:
     vector<double> avg_aim;//每次迭代的平均行程距离
     vector<double> best_aim;//每次迭代最短行程距离
     vector<int> search(vector<int> &individual, vector<int> &temp) const;
+
     double get_fitness(vector<int> &individual);
     vector<double> get_fitness(vector<vector<int>> &all_individuals);
     bool isError(vector<int> &individual) const;
@@ -41,6 +42,7 @@ private:
     void cross();
     void mutate();
     void select();
+    void clock_opt();
 };
 
 

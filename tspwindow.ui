@@ -18,10 +18,13 @@
     <property name="geometry">
      <rect>
       <x>9</x>
-      <y>-1</y>
+      <y>9</y>
       <width>801</width>
-      <height>381</height>
+      <height>371</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
     </property>
    </widget>
    <widget class="QGroupBox" name="groupBox">
@@ -124,6 +127,7 @@
     </property>
     <addaction name="action11"/>
     <addaction name="action12"/>
+    <addaction name="action13"/>
    </widget>
    <addaction name="menu_1"/>
    <addaction name="menu_2"/>
@@ -137,7 +141,7 @@
   </widget>
   <action name="action11">
    <property name="text">
-    <string>att48</string>
+    <string>bayg29</string>
    </property>
    <property name="font">
     <font>
@@ -147,7 +151,7 @@
   </action>
   <action name="action12">
    <property name="text">
-    <string>st70</string>
+    <string>att48</string>
    </property>
    <property name="font">
     <font>
@@ -203,6 +207,11 @@
   <action name="action232">
    <property name="text">
     <string>运行并演示</string>
+   </property>
+  </action>
+  <action name="action13">
+   <property name="text">
+    <string>st70</string>
    </property>
   </action>
  </widget>

@@ -15,12 +15,16 @@ Genetic::Genetic(int city, int individual_num, int max_iter, double mutate_prob)
 }
 
 void Genetic::init() {
-    if(city==48){
-        //position=att48_position;
+    if(city==29){
+        position=bayg29_position;
+        distance=&bayg29_distance;
+    }
+    else if(city==48){
+        position=att48_position;
         distance=&att48_distance;
     }
     else if(city==70){
-        //position=st70_position;
+        position=st70_position;
         distance=&st70_distance;
     }
     else cout<<"城市数量异常！";
@@ -74,6 +78,8 @@ void Genetic::run() {
     }
     //开始遗传算法
     for(int count=0;count<max_iter;count++){
+        //时针优化，统一采用顺时针方案
+        clock_opt();
         //交叉
         cross();
         //变异
@@ -140,7 +146,6 @@ void Genetic::cross() {
     default_random_engine e(time(0));
     uniform_int_distribution<signed> u(0,city-1);
     for(int i=0;i<individual_num/2;i++){
-        //i和individual_num-i-1
         int pos1=u(e);//该位置后cross_num个城市
         int pos2=u(e);
         //cout<<pos1<<","<<pos2<<endl;
@@ -159,7 +164,7 @@ void Genetic::cross() {
         }
         //记录第二条染色体中对应的下标
         index=search(individuals_t[individual_num-i-1],temp1);
-        if(index.size()!=cross_num){
+        if((int)index.size()!=cross_num){
             cout<<"交叉异常1！";
             //throw exception();
         }
@@ -181,9 +186,8 @@ void Genetic::cross() {
         }
         //对第一个染色体进行处理和规范化
         index=search(individuals_t[i],temp2);
-        if(index.size()!=cross_num){
+        if((int)index.size()!=cross_num){
             cout<<"交叉异常2！";
-            //throw exception();
         }
         for(int k=0;k<cross_num;k++){
             individuals_t[i][pos1+k]=temp2[k];
@@ -302,6 +306,22 @@ void Genetic::select() {
 //    }
 }
 
+void Genetic::clock_opt() {
+    for(int i=0;i<individual_num;i++){
+        long long s=0;
+        int j;
+        for(j=0;j<city-1;j++){
+            s+=(position[individuals[i][j]][0]*position[individuals[i][j+1]][1]-position[individuals[i][j]][1]*position[individuals[i][j+1]][0]);
+        }
+        s+=(position[individuals[i][j]][0]*position[individuals[i][0]][1]-position[individuals[i][j]][1]*position[individuals[i][0]][0]);
+        //cout<<"s:"<<s<<endl;
+        if(s>0){//顺时针
+            std::reverse(individuals[i].begin(),individuals[i].end());
+            std::reverse(individuals_t[i].begin(),individuals_t[i].end());
+        }
+    }
+}
+
 void Genetic::reverse(){
 //    //random_device rd;
     default_random_engine e(time(0));
@@ -324,7 +344,10 @@ void Genetic::reverse(){
             route[pos1+j]=route[pos2-j];
             route[pos2-j]=temp;
         }
-        if(get_fitness(route)>get_fitness(individuals[i]))individuals[i]=route;//进化
+        if(get_fitness(route)>get_fitness(individuals[i])){
+            individuals[i]=route;//进化
+            individuals_t[i]=route;
+        }
     }
 }
 
@@ -341,7 +364,7 @@ QString Genetic::output() {
     QString str="";
     if(city==48)str="att48";
     else if(city==70)str="st70";
-    QString res=QString("（遗传算法，%1）我的最短环路距离：%2\n我的最短环路：").arg(str).arg(best_aim[index]);
+    QString res=QString("（遗传算法，%1）最短环路距离：%2\n最短环路：").arg(str).arg(best_aim[index]);
     for (int i = 0; i < city; i++) {
         res.append(QString("%1, ").arg(best_route[index][i]+1));
     }
@@ -356,7 +379,7 @@ bool Genetic::isExist(int c, vector<int> t) const {
 }
 
 bool Genetic::isError(vector<int> &individual) const {
-    vector<bool> visit(city);
+    vector<bool> visit(city,false);
     for(int i=0;i<city;i++){
         if(visit[individual[i]])return true;
         else visit[individual[i]]=true;
@@ -375,6 +398,7 @@ vector<double> *Genetic::get_best_aim() {
 vector<double> *Genetic::get_avg_aim() {
     return &avg_aim;
 }
+
 
 Genetic::~Genetic() = default;
 

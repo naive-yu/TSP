@@ -16,7 +16,11 @@ Ant_colony::Ant_colony(int city, int ants, int max_iter, int Q, double alpha, do
 }
 
 void Ant_colony::init() {
-    if(city==48){
+    if(city==29){
+        //position=&bayg29_position;
+        distance=&bayg29_distance;
+    }
+    else if(city==48){
         //position=&att48_position;
         distance=&att48_distance;
     }
@@ -48,7 +52,7 @@ void Ant_colony::run(){
     //使用随机数引擎
     //random_device rd;
     //cout<<time(0)<<endl;
-    default_random_engine e(time(0));
+    default_random_engine e(time(0));//time(0)
     uniform_int_distribution<signed> u(0,city-1);
     uniform_real_distribution<double> u1(0,1);
     for(int count=0;count<max_iter;count++){
@@ -140,7 +144,7 @@ QString Ant_colony::output() {
     QString str="";
     if(city==48)str="att48";
     else if(city==70)str="st70";
-    QString res=QString("（蚁群算法，%1）我的最短环路距离：%2\n我的最短环路：").arg(str).arg(best_aim[index]);
+    QString res=QString("（蚁群算法，%1）最短环路距离：%2\n最短环路：").arg(str).arg(best_aim[index]);
     for (int i = 0; i < city; i++) {
         res.append(QString("%1, ").arg(best_route[index][i]+1));
     }

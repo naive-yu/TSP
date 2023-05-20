@@ -132,7 +132,13 @@ void Dialog::paint_axis(QPainter *painter,double y_scale,double y_start,double x
         int index=(int)str.indexOf('e');
         int cur=str.mid(index+1,3).toInt();
         str=str.mid(0,index);
-        if(cur<mici){
+        if(index==-1){
+            QString result="0.";
+            str.remove(".");
+            for(int j=1;j<mici-str.size();j++)result+="0";
+            str=result+str;
+        }
+        else if(cur<mici){
             QString result="0.";
             str.remove(".");
             for(int j=1;j<mici-cur;j++)result+="0";

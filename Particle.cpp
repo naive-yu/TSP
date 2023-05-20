@@ -12,12 +12,16 @@ Particle::Particle(int city, int particle_num, int max_iter, double max_w, doubl
 }
 
 void Particle::init() {
-    if(city==48){
-        //position=att48_position;
+    if(city==29){
+        position=bayg29_position;
+        distance=&bayg29_distance;
+    }
+    else if(city==48){
+        position=att48_position;
         distance=&att48_distance;
     }
     else if(city==70){
-        //position=st70_position;
+        position=st70_position;
         distance=&st70_distance;
     }
     else cout<<"城市数量异常！";
@@ -51,6 +55,7 @@ void Particle::run() {
         v[i]=route;
         shuffle(v[i].begin(),v[i].end(), std::mt19937(std::random_device()()));
     }
+    //clock_opt();
     //计算群体极值
     vector<double> lens=get_length(particles);
     int index=0;
@@ -114,12 +119,12 @@ void Particle::run() {
                 }
             }
         }
-//        //交叉
-        //cross();
 ////        //变异
-        //mutate();
+        mutate();
 //        //进化逆转
         //reverse();
+
+        //clock_opt();
         //个体极值和群体极值更新
         lens=get_length(particles);
         for(int i=0;i<particle_num;i++){
@@ -139,47 +144,18 @@ void Particle::run() {
     }
 }
 
-void Particle::cross(){
-    default_random_engine e(time(0));
-    uniform_int_distribution<signed> u(0,city-1);
-    vector<int> route;
+void Particle::clock_opt() {
     for(int i=0;i<particle_num;i++){
-        route=particles[i];
-        int pos1=u(e);//该位置后cross_num个城市
-        int pos2=u(e);
-        if(pos2 < pos1){
-            int temp=pos1;
-            pos1=pos2;
-            pos2=temp;
+        long long s=0;
+        int j;
+        for(j=0;j<city-1;j++){
+            s+=(position[particles[i][j]][0]*position[particles[i][j+1]][1]-position[particles[i][j]][1]*position[particles[i][j+1]][0]);
         }
-        int cross_num=pos2-pos1+1;
-        vector<int> temp1(cross_num);
-        vector<int> temp2(cross_num);
-        vector<int> index;
-        for(int j=0;j<cross_num;j++){
-            temp1[j]=best_route[cnt-1][pos1+j];
-            temp2[j]=route[pos1+j];
+        s+=(position[particles[i][j]][0]*position[particles[i][0]][1]-position[particles[i][j]][1]*position[particles[i][0]][0]);
+        //cout<<"s:"<<s<<endl;
+        if(s>0){//顺时针
+            std::reverse(particles[i].begin(),particles[i].end());
         }
-        //记录第二条染色体中对应的下标
-        index=search(route,temp1);
-        if(index.size()!=cross_num){
-            cout<<"交叉异常1！";
-            //throw exception();
-        }
-        //第二个染色体相应位置并执行交换
-        for(int k=0;k<cross_num;k++){
-            route[pos1+k]=temp1[k];
-        }
-        //第二个染色体规范化
-        for(int k=0,j=0;j<cross_num&&k<cross_num;){
-            while(k<cross_num&&isExist(temp1[k],temp2))++k;
-            while(j<cross_num&&isExist(temp2[j],temp1))++j;
-            if(k<cross_num&&j<cross_num){
-                route[index[k]]=temp2[j];
-                ++k;++j;
-            }
-        }
-        if(get_length(route)<get_length(particles[i]))particles[i]=route;
     }
 }
 
@@ -197,8 +173,10 @@ void Particle::mutate() {
             route=particles[i];
             route[index1]=particles[i][index2];
             route[index2]=particles[i][index1];
-            particles[i]=route;
-            //if(get_length(route)<get_length(particles[i]))particles[i]=route;
+            if(get_length(route)<get_length(particles[i])){
+                particles[i]=route;
+                if(get_length(route)< get_length(particles_best[i]))particles_best[i]=route;
+            }
         }
     }
 }
@@ -263,7 +241,7 @@ QString Particle::output() {
     QString str="";
     if(city==48)str="att48";
     else if(city==70)str="st70";
-    QString res=QString("（粒子群优化算法，%1）我的最短环路距离：%2\n我的最短环路：").arg(str).arg(best_aim[index]);
+    QString res=QString("（粒子群优化算法，%1）最短环路距离：%2\n最短环路：").arg(str).arg(best_aim[index]);
     for (int i = 0; i < city; i++) {
         res.append(QString("%1, ").arg(best_route[index][i]+1));
     }

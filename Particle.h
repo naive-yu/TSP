@@ -21,6 +21,7 @@ public:
     void mutate();
     void cross();
     void reverse();
+    void clock_opt();
     QString output();
     vector<double> *get_avg_aim();
     vector<double> *get_best_aim();
@@ -30,7 +31,7 @@ public:
 private:
     int cnt{},city{}, particle_num{}, max_iter{};//城市数、粒子个数、最大迭代次数
     double max_w{}, min_w{}, c1{}, c2{};//惯性因子、个体学习因子、社会学习因子
-    //const vector <vector<int>> *position{};//位置矩阵
+    vector <vector<int>> position{};//位置矩阵
     const vector <vector<float>> *distance{};//距离矩阵
     vector<vector<int>> particles_best;
     vector<vector<int>> particles;
