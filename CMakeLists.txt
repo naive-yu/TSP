@@ -12,15 +12,37 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
 
-set(TS_FILES TSP_zh_CN.ts)
+set(CMAKE_AUTOUIC_SEARCH_PATHS
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/ui
+)
+message(STATUS "AUTOUIC will search: ${CMAKE_AUTOUIC_SEARCH_PATHS}")
+
+set(TS_FILES ${CMAKE_SOURCE_DIR}/ts/TSP_zh_CN.ts)
 
 set(PROJECT_SOURCES
-        main.cpp
-        TSPWindow.cpp
-        TSPWindow.h
-        TSPWindow.ui
+        src/main.cpp
+        src/TSPWindow.cpp
+        src/include/TSPWindow.h
+        src/ui/TSPWindow.ui
+        src/ui/dialog.ui
         ${TS_FILES}
+        src/Ant_colony.cpp
+        src/include/Ant_colony.h
+        src/include/resource.h
+        src/Genetic.cpp
+        src/include/Genetic.h
+        src/include/dialog.h
+        src/dialog.cpp
+        src/Particle.cpp
+        src/include/Particle.h
+        src/Helper.cpp
+        src/include/Helper.h
 )
+
+set(TSP_SRC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/src/include)
+# NOTE: prefer target_include_directories for modern CMake. The target is defined later,
+# so we'll add the include dir to the target after target creation.
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(TSP
@@ -50,6 +72,9 @@ else()
 endif()
 
 target_link_libraries(TSP PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+
+# Add project include directory to the target (modern CMake)
+target_include_directories(TSP PRIVATE ${TSP_SRC_INCLUDE_DIR})
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
