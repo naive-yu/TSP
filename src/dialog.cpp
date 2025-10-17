@@ -1,4 +1,5 @@
-#include "dialog.h"
+#include "Dialog.h"
+#include "Algorithm.h"
 #include "ui_dialog.h"
 #include <QPainter>
 #include <memory>
@@ -12,9 +13,9 @@ Dialog::~Dialog() { delete ui; }
 void Dialog::paintEvent(QPaintEvent *event) {
   std::vector<double> iter_best(*best_);
   if (!this->isHidden()) {
-    // 绘制坐标轴
+    // 绘制坐标轴，确定缩放比例
     int size = static_cast<int>(iter_best.size());
-    double mini = 1000000.0;
+    double mini = ALGO_INF;
     double maxi = 0.0;
     for (int i = 0; i < size; i++) {
       iter_best[i] = std::min(iter_best[i], mini);
@@ -28,6 +29,7 @@ void Dialog::paintEvent(QPaintEvent *event) {
     double y_start = iter_best[size - 1];
     double x_scale = (width - 100) / (size + 0.0); // max_iter
     paint_axis(&painter, y_scale, y_start, x_scale);
+
     // 画最短环路距离曲线
     painter.setWindow(0, height, width, -height); // 数学坐标系
     painter.setPen(QPen(Qt::red, 2));

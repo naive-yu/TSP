@@ -1,6 +1,4 @@
-#ifndef TSP_HELPER_H
-#define TSP_HELPER_H
-
+#pragma once
 #include <fstream>
 #include <string>
 
@@ -20,5 +18,3 @@ private:
   static ofstream get_stream(string &file);
   static void close_stream(ofstream &f);
 };
-
-#endif // TSP_HELPER_H

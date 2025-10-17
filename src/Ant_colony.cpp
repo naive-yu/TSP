@@ -1,4 +1,5 @@
 #include "Ant_colony.h"
+#include "Algorithm.h"
 #include <QString>
 #include <chrono>
 #include <cmath>
@@ -7,23 +8,22 @@
 #include <random>
 #include <vector>
 
-Ant_colony::Ant_colony() = default;
 Ant_colony::Ant_colony(int city, int ants, int max_iter, int Q, double alpha,
                        double beta, double rho)
-    : city(city), ants(ants), max_iter(max_iter), Q(Q), alpha(alpha),
-      beta(beta), rho(rho) {}
+    : Algorithm(city, max_iter, "Ant Colony"), ants_(ants), Q_(Q),
+      alpha_(alpha), beta_(beta), rho_(rho) {}
+
+Ant_colony::Ant_colony(int city, AntParams &params)
+    : Algorithm(city, params.max_iter, "Ant Colony"), ants_(params.ants),
+      Q_(params.Q), alpha_(params.alpha), beta_(params.beta), rho_(params.rho) {
+}
 
 void Ant_colony::init(const std::vector<std::vector<int>> &pos,
                       const std::vector<std::vector<double>> &dis) {
   // 距离矩阵
-  position = std::make_shared<const std::vector<std::vector<int>>>(pos);
-  distance = std::make_shared<const std::vector<std::vector<double>>>(dis);
-
+  Algorithm::init(pos, dis);
   // 信息素矩阵
-  message.assign(city, std::vector<double>(city, 1.0));
-  best_route.assign(max_iter, std::vector<int>(city, 0));
-  avg_aim.assign(max_iter, 0.0);
-  best_aim.assign(max_iter, ANTINF);
+  message.assign(city_, std::vector<double>(city_, 1.0));
 }
 
 void Ant_colony::run() {
@@ -32,30 +32,30 @@ void Ant_colony::run() {
       (unsigned)std::chrono::high_resolution_clock::now()
           .time_since_epoch()
           .count());
-  std::uniform_int_distribution<int> u(0, city - 1);
+  std::uniform_int_distribution<int> u(0, city_ - 1);
   std::uniform_real_distribution<double> ur(0.0, 1.0);
-  for (int iter = 0; iter < max_iter; iter++) {
+  for (int iter = 0; iter < max_iter_; iter++) {
     // 每次迭代为每只蚂蚁生成路径
-    std::vector<std::vector<int>> routes(ants, std::vector<int>(city));
+    std::vector<std::vector<int>> routes(ants_, std::vector<int>(city_));
     // 访问记录矩阵
-    std::vector<std::vector<bool>> visited(ants, std::vector<bool>(city));
+    std::vector<std::vector<bool>> visited(ants_, std::vector<bool>(city_));
     // 随机生成初始城市
-    for (int i = 0; i < ants; i++) {
+    for (int i = 0; i < ants_; i++) {
       routes[i][0] = u(rng);
       visited[i][routes[i][0]] = true;
     }
 
     // 构建路径：按概率选择下一个城市
-    for (int pos = 1; pos < city; pos++) {
-      for (int ant = 0; ant < ants; ant++) {
-        std::vector<double> p(city);
-        for (int c = 0; c < city; c++) {
+    for (int pos = 1; pos < city_; pos++) {
+      for (int ant = 0; ant < ants_; ant++) {
+        std::vector<double> p(city_);
+        for (int c = 0; c < city_; c++) {
           // 未被此蚂蚁访问的才可能被下一次访问
           if (!visited[ant][c]) {
             double tau = message[routes[ant][pos - 1]][c];
-            double eta =
-                1.0 / static_cast<double>((*distance)[routes[ant][pos - 1]][c]);
-            p[c] = std::pow(tau, alpha) * std::pow(eta, beta);
+            double eta = 1.0 / static_cast<double>(
+                                   (*distance_)[routes[ant][pos - 1]][c]);
+            p[c] = std::pow(tau, alpha_) * std::pow(eta, beta_);
           } else {
             p[c] = 0;
           }
@@ -65,7 +65,7 @@ void Ant_colony::run() {
         // 轮盘赌决定下一个城市
         while (select == -1) {
           double ps = ur(rng);
-          for (int k = 0; k < city; k++) {
+          for (int k = 0; k < city_; k++) {
             if (!visited[ant][k] && ps <= p[k] / total) {
               select = k;
               break;
@@ -78,14 +78,14 @@ void Ant_colony::run() {
     }
 
     // 记录本次迭代最佳路线的蚂蚁
-    double best = ANTINF, sum = 0.0;
+    double best = ALGO_INF, sum = 0.0;
     int best_idx;
-    for (int ant = 0; ant < ants; ant++) {
+    for (int ant = 0; ant < ants_; ant++) {
       double len = 0.0;
-      for (int i = 0; i < city - 1; i++) {
-        len += (*distance)[routes[ant][i]][routes[ant][i + 1]];
+      for (int i = 0; i < city_ - 1; i++) {
+        len += (*distance_)[routes[ant][i]][routes[ant][i + 1]];
       }
-      len += (*distance)[routes[ant][city - 1]][routes[ant][0]];
+      len += (*distance_)[routes[ant][city_ - 1]][routes[ant][0]];
       sum += len;
       if (len < best) {
         best = len;
@@ -94,60 +94,50 @@ void Ant_colony::run() {
     }
 
     // 最佳目标和平均目标
-    best_aim[iter] = best;
-    avg_aim[iter] = sum / static_cast<double>(ants);
-    best_route[iter] = routes[best_idx];
+    best_aim_[iter] = best;
+    avg_aim_[iter] = sum / static_cast<double>(ants_);
+    best_route_[iter] = routes[best_idx];
 
     // 信息素挥发
-    for (int i = 0; i < city; i++) {
-      for (int j = 0; j < city; j++) {
-        message[i][j] *= (1 - rho);
+    for (int i = 0; i < city_; i++) {
+      for (int j = 0; j < city_; j++) {
+        message[i][j] *= (1 - rho_);
       }
     }
 
     // 信息素更新（在最优路径上释放信息素）
-    for (int i = 0; i < city - 1; i++) {
-      message[best_route[iter][i]][best_route[iter][i + 1]] +=
-          static_cast<double>(Q) / best;
+    for (int i = 0; i < city_ - 1; i++) {
+      message[best_route_[iter][i]][best_route_[iter][i + 1]] +=
+          static_cast<double>(Q_) / best;
     }
-    message[best_route[iter][city - 1]][best_route[iter][0]] +=
-        static_cast<double>(Q) / best;
+    message[best_route_[iter][city_ - 1]][best_route_[iter][0]] +=
+        static_cast<double>(Q_) / best;
   }
 }
 
 QString Ant_colony::output() const {
   int idx = 0;
-  double best = best_aim[0];
-  for (int i = 1; i < max_iter; i++) {
-    if (best_aim[i] < best) {
-      best = best_aim[i];
+  double best = best_aim_[0];
+  for (int i = 1; i < max_iter_; i++) {
+    if (best_aim_[i] < best) {
+      best = best_aim_[i];
       idx = i;
     }
   }
 
   QString name = "";
-  if (city == 29) {
+  if (city_ == 29) {
     name = "bayg29";
-  } else if (city == 48) {
+  } else if (city_ == 48) {
     name = "att48";
-  } else if (city == 70) {
+  } else if (city_ == 70) {
     name = "st70";
   }
   QString res = QString("( 蚁群算法 %1 ) 最短环路距离: %2\n最短环路: ")
                     .arg(name)
-                    .arg(best_aim[idx]);
-  for (int i = 0; i < city; i++) {
-    res.append(QString("%1, ").arg(best_route[idx][i] + 1));
+                    .arg(best_aim_[idx]);
+  for (int i = 0; i < city_; i++) {
+    res.append(QString("%1, ").arg(best_route_[idx][i] + 1));
   }
   return res;
 }
-
-const std::vector<double> &Ant_colony::get_avg_aim() const { return avg_aim; }
-
-const std::vector<double> &Ant_colony::get_best_aim() const { return best_aim; }
-
-const std::vector<std::vector<int>> &Ant_colony::get_route() const {
-  return best_route;
-}
-
-Ant_colony::~Ant_colony() = default;

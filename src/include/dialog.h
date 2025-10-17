@@ -1,6 +1,4 @@
-#ifndef DIALOG_H
-#define DIALOG_H
-
+#pragma once
 #include <QDialog>
 #include <memory>
 #include <vector>
@@ -25,5 +23,3 @@ private:
   void paint_axis(QPainter *painter, double y_scale, double y_start,
                   double x_scale);
 };
-
-#endif // DIALOG_H

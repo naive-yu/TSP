@@ -1,17 +1,28 @@
 #include "TSPWindow.h"
-#include "dialog.h"
+#include "Ant_colony.h"
+#include "Config.h"
+#include "Dialog.h"
+#include "Genetic.h"
+#include "Particle.h"
 #include "resource.h"
 #include "ui_TSPWindow.h"
 #include <QPainter>
 #include <cmath>
+#include <memory>
+#include <qtimer.h>
 #include <vector>
 
 TSPWindow::TSPWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::TSPWindow) {
   ui->setupUi(this);
+  cfg_ = std::make_shared<Config>("config/tsp_config.ini");
+  timer = nullptr;
 }
 
-TSPWindow::~TSPWindow() { delete ui; }
+TSPWindow::~TSPWindow() {
+  resetTimer();
+  delete ui;
+}
 
 void TSPWindow::computeDistance() {
   int n = static_cast<int>(position.size());
@@ -24,186 +35,146 @@ void TSPWindow::computeDistance() {
   }
 }
 
+void TSPWindow::showDialog() {
+  if (timer != nullptr) {
+    timer->stop();
+  }
+  ui->listWidget->addItem(algo->output());
+  auto dialog = new Dialog();
+  dialog->init(algo->get_best_aim(), algo->get_avg_aim());
+  dialog->show();
+}
+
+void TSPWindow::resetTimer() noexcept {
+  if (timer != nullptr) {
+    timer->stop();
+    timer->deleteLater();
+    timer = nullptr;
+  }
+}
+
 void TSPWindow::deal_menu(QAction *action) {
   if (action->objectName() == "action11") {
-    city = 29;
+    city_ = 29;
     position = bayg29_position;
     computeDistance();
-    route.clear();
+    route = nullptr;
   } else if (action->objectName() == "action12") {
-    city = 48;
+    city_ = 48;
     position = att48_position;
+    route = nullptr;
     computeDistance();
-    route.clear();
   } else if (action->objectName() == "action13") {
-    city = 70;
+    city_ = 70;
     position = st70_position;
+    route = nullptr;
     computeDistance();
-    route.clear();
   }
-  if (city != 0) {
+
+  if (city_ != 0) {
     update();
   }
-  if (city == 0) {
+
+  if (city_ == 0) {
     ui->statusbar->showMessage("请先选择数据集! ");
   } else if (action->objectName() == "action211") {
-    if (city == 29) {
-      max_iter = 400; // 100
-      ant = Ant_colony(city, 120, max_iter, 10, 0.4, 5, 0.1);
-      ant.init(position, distance);
-    } else if (city == 48) {
-      max_iter = 400;
-      ant = Ant_colony(city, 150, max_iter, 1000, 0.5, 4, 0.1);
-      ant.init(position, distance);
-    } else if (city == 70) {
-      max_iter = 400;
-      ant = Ant_colony(city, 210, max_iter, 100, 0.4, 6, 0.2);
-      ant.init(position, distance);
-    }
-    ant.run();
-    route = ant.get_route().back();
+    auto params = cfg_->getAntParams(city_);
+    algo = std::make_unique<Ant_colony>(city_, params);
+    algo->init(position, distance);
+    algo->run();
+
+    route = std::make_shared<std::vector<int>>(algo->get_route().back());
     update();
-    ui->listWidget->addItem(ant.output());
-    auto dialog = new Dialog();
-    dialog->init(ant.get_best_aim(), ant.get_avg_aim());
-    dialog->show();
+    showDialog();
   } else if (action->objectName() == "action212") {
-    index = 0;
-    cur_algorithm = 1;
-    if (city == 29) {
-      max_iter = 400; // 100
-      ant = Ant_colony(city, 120, max_iter, 10, 0.4, 5, 0.1);
-      ant.init(position, distance);
-    } else if (city == 48) {
-      max_iter = 400;
-      ant = Ant_colony(city, 150, max_iter, 1000, 0.5, 4, 0.1);
-      ant.init(position, distance);
-    } else if (city == 70) {
-      max_iter = 400;
-      ant = Ant_colony(city, 210, max_iter, 100, 0.4, 6, 0.2);
-      ant.init(position, distance);
-    }
-    ant.run();
+    idx_ = 0;
+    auto params = cfg_->getAntParams(city_);
+    max_iter_ = params.max_iter;
+    algo = std::make_unique<Ant_colony>(city_, params);
+    algo->init(position, distance);
+    algo->run();
+
+    resetTimer();
     timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(show_route()));
+    connect(timer, &QTimer::timeout, this, &TSPWindow::show_route);
     timer->start(100);
   } else if (action->objectName() == "action221") {
-    if (city == 29) {
-      max_iter = 2000;
-      gen = Genetic(city, 280, max_iter, 0.2);
-      gen.init(position, distance);
-    } else if (city == 48) {
-      max_iter = 2000;
-      gen = Genetic(city, 380, max_iter, 0.2);
-      gen.init(position, distance);
-    } else if (city == 70) {
-      max_iter = 2000;
-      gen = Genetic(city, 480, max_iter, 0.15);
-      gen.init(position, distance);
-    }
-    gen.run();
-    route = gen.get_route().back();
+    auto params = cfg_->getGeneticParams(city_);
+    algo = std::make_unique<Genetic>(city_, params);
+    algo->init(position, distance);
+    algo->run();
+
+    route = std::make_shared<std::vector<int>>(algo->get_route().back());
     update();
-    ui->listWidget->addItem(gen.output());
-    auto *dialog = new Dialog();
-    dialog->init(gen.get_best_aim(), gen.get_avg_aim());
-    dialog->show();
+    showDialog();
   } else if (action->objectName() == "action222") {
-    index = 0;
-    cur_algorithm = 2;
-    if (city == 29) {
-      max_iter = 1000;
-      gen = Genetic(city, 280, max_iter, 0.2);
-      gen.init(position, distance);
-    } else if (city == 48) {
-      max_iter = 2000;
-      gen = Genetic(city, 380, max_iter, 0.2);
-      gen.init(position, distance);
-    } else if (city == 70) {
-      max_iter = 2000;
-      gen = Genetic(city, 480, max_iter, 0.15);
-      gen.init(position, distance);
-    }
-    gen.run();
+    idx_ = 0;
+    auto params = cfg_->getGeneticParams(city_);
+    max_iter_ = params.max_iter;
+    algo = std::make_unique<Genetic>(city_, params);
+    algo->init(position, distance);
+    algo->run();
+
+    resetTimer();
     timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(show_route()));
+    connect(timer, &QTimer::timeout, this, &TSPWindow::show_route);
     timer->start(100);
   } else if (action->objectName() == "action231") {
-    if (city == 29) {
-      max_iter = 2000;
-      particle = Particle(city, 600, max_iter, 1, 0.7, 0.6, 0.05);
-      particle.init(position, distance);
-    } else if (city == 48) {
-      max_iter = 2000;
-      particle = Particle(city, 1000, max_iter, 1, 0.5, 0.5, 0.05);
-      particle.init(position, distance);
-    } else if (city == 70) {
-      max_iter = 2000;
-      particle = Particle(city, 1800, max_iter, 1, 0.4, 0.5, 0.05);
-      particle.init(position, distance);
-    }
-    particle.run();
-    while (particle.get_best_aim().back() > 820) {
-      particle.run();
-    }
-    route = particle.get_route().back();
+    auto parms = cfg_->getParticleParams(city_);
+    algo = std::make_unique<Particle>(city_, parms);
+    algo->init(position, distance);
+    algo->run();
+
+    route = std::make_shared<std::vector<int>>(algo->get_route().back());
     update();
-    ui->listWidget->clear();
-    ui->listWidget->addItem(particle.output());
-    auto *dialog = new Dialog();
-    dialog->init(particle.get_best_aim(), particle.get_avg_aim());
-    dialog->show();
+    showDialog();
   } else if (action->objectName() == "action232") {
-    index = 0;
-    if (city == 29) {
-      max_iter = 1000;
-      particle = Particle(city, 600, max_iter, 1, 0.7, 0.6, 0.05);
-      particle.init(position, distance);
-    } else if (city == 48) {
-      max_iter = 2000;
-      particle = Particle(city, 1000, max_iter, 1, 0.5, 0.5, 0.05);
-      particle.init(position, distance);
-    } else if (city == 70) {
-      max_iter = 2000;
-      particle = Particle(city, 1800, max_iter, 1, 0.4, 0.5, 0.05);
-      particle.init(position, distance);
-    }
-    cur_algorithm = 3;
-    particle.run();
+    idx_ = 0;
+    auto params = cfg_->getParticleParams(city_);
+    max_iter_ = params.max_iter;
+    algo = std::make_unique<Particle>(city_, params);
+    algo->init(position, distance);
+    algo->run();
+
+    resetTimer();
     timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(show_route()));
+    connect(timer, &QTimer::timeout, this, &TSPWindow::show_route);
     timer->start(100);
   }
 }
 
 void TSPWindow::show_route() {
-  if (cur_algorithm == 1)
-    route = ant.get_route()[index];
-  else if (cur_algorithm == 2)
-    route = gen.get_route()[index];
-  else if (cur_algorithm == 3)
-    route = particle.get_route()[index];
-  if (index == max_iter - 1) {
-    if (cur_algorithm == 1) {
-      ui->listWidget->addItem(ant.output());
-      auto dialog = new Dialog();
-      dialog->init(ant.get_best_aim(), ant.get_avg_aim());
-      dialog->show();
-    } else if (cur_algorithm == 2) {
-      ui->listWidget->addItem(gen.output());
-      auto dialog = new Dialog();
-      dialog->init(gen.get_best_aim(), gen.get_avg_aim());
-      dialog->show();
-    } else if (cur_algorithm == 3) {
-      ui->listWidget->addItem(particle.output());
-      auto dialog = new Dialog();
-      dialog->init(particle.get_best_aim(), particle.get_avg_aim());
-      dialog->show();
+  if (algo == nullptr) {
+    if (timer != nullptr) {
+      timer->stop();
+      return;
     }
-    timer->stop();
   }
-  ++index;
+
+  const auto &routes = algo->get_route();
+  if (routes.empty()) {
+    if (timer != nullptr) {
+      timer->stop();
+    }
+    return;
+  }
+
+  if (idx_ < 0) {
+    idx_ = 0;
+  }
+
+  if (idx_ >= max_iter_) {
+    showDialog();
+    return;
+  }
+
+  route = std::make_shared<std::vector<int>>(algo->get_route()[idx_]);
   update();
+
+  ++idx_;
+  if (idx_ >= max_iter_) {
+    showDialog();
+  }
 }
 
 void TSPWindow::paintEvent(QPaintEvent *event) {
@@ -213,36 +184,37 @@ void TSPWindow::paintEvent(QPaintEvent *event) {
   int width = ui->widget->width() - 4;
   int height = ui->widget->height() - 4;
   int max_x = 0, max_y = 0;
-  for (int i = 0; i < city; i++) {
+  for (int i = 0; i < city_; i++) {
     max_x = std::max(max_x, position[i][0]);
     max_y = std::max(max_y, position[i][1]);
   }
-  double scale_x = width / (double)max_x;
-  double scale_y = height / (double)max_y;
-  if (city != 0) {
+  double scale_x = width / static_cast<double>(max_x);
+  double scale_y = height / static_cast<double>(max_y);
+  if (city_ != 0) {
     // 绘制城市位置点
     painter.setPen(QPen(Qt::black, 5));
     painter.setFont(QFont("Arial", 30));
-    for (int i = 0; i < city; i++) {
+    for (int i = 0; i < city_; i++) {
       painter.drawEllipse(2 + (int)(position[i][0] * scale_x),
                           menu_height + (int)(position[i][1] * scale_y), 2, 2);
     }
   }
-  if (!route.empty()) {
+  if (route != nullptr) {
     // 绘制当前路线
     painter.setPen(QPen(Qt::darkBlue, 1));
     QPoint start, end;
-    for (int i = 0; i < city - 1; i++) {
-      start = QPoint(2 + (int)(position[route[i]][0] * scale_x),
-                     menu_height + (int)(position[route[i]][1] * scale_y));
-      end = QPoint(2 + (int)(position[route[i + 1]][0] * scale_x),
-                   menu_height + (int)(position[route[i + 1]][1] * scale_y));
+    for (int i = 0; i < city_ - 1; i++) {
+      start = QPoint(2 + (int)(position[(*route)[i]][0] * scale_x),
+                     menu_height + (int)(position[(*route)[i]][1] * scale_y));
+      end = QPoint(2 + (int)(position[(*route)[i + 1]][0] * scale_x),
+                   menu_height + (int)(position[(*route)[i + 1]][1] * scale_y));
       painter.drawLine(start, end);
     }
-    start = QPoint(2 + (int)(position[route[city - 1]][0] * scale_x),
-                   menu_height + (int)(position[route[city - 1]][1] * scale_y));
-    end = QPoint(2 + (int)(position[route[0]][0] * scale_x),
-                 menu_height + (int)(position[route[0]][1] * scale_y));
+    start =
+        QPoint(2 + (int)(position[(*route)[city_ - 1]][0] * scale_x),
+               menu_height + (int)(position[(*route)[city_ - 1]][1] * scale_y));
+    end = QPoint(2 + (int)(position[(*route)[0]][0] * scale_x),
+                 menu_height + (int)(position[(*route)[0]][1] * scale_y));
     painter.drawLine(start, end);
   }
 }

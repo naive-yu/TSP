@@ -1,11 +1,9 @@
-#ifndef TSPWINDOW_H
-#define TSPWINDOW_H
-
-#include "Ant_colony.h"
-#include "Genetic.h"
-#include "Particle.h"
+#pragma once
+#include "Algorithm.h"
+#include "Config.h"
 #include <QMainWindow>
 #include <QTimer>
+#include <memory>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -26,16 +24,15 @@ private slots:
 
 private:
   Ui::TSPWindow *ui;
-  Ant_colony ant;
-  Genetic gen;
-  Particle particle;
-  int cur_algorithm{}, city{}, index{}, max_iter{};
+  QTimer *timer;
+  std::unique_ptr<Algorithm> algo;
+  int city_{}, idx_{}, max_iter_{};
   std::vector<std::vector<int>> position;
   std::vector<std::vector<double>> distance;
-  std::vector<int> route;
-  QTimer *timer{};
+  std::shared_ptr<const std::vector<int>> route;
+  std::shared_ptr<Config> cfg_;
+  void showDialog();
+  void resetTimer() noexcept;
   void paintEvent(QPaintEvent *event) override;
   void computeDistance();
 };
-
-#endif // TSPWINDOW_H

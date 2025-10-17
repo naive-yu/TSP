@@ -1,6 +1,4 @@
-#ifndef TSP_RESOURCE_H
-#define TSP_RESOURCE_H
-
+#pragma once
 #include <vector>
 
 const std::vector<std::vector<int>> bayg29_position = {
@@ -1405,5 +1403,3 @@ const std::vector<std::vector<int>> st70_position = {
 //      88.11924,  70.88018,  34.365681, 37.94733,  18.248287, 64.660652,
 //      98.35141,  92.962357, 24.515301, 75.239616, 68.066147, 28.79236,
 //      78.434685, 83.192551, 8.0622578, 0}};
-
-#endif // TSP_RESOURCE_H

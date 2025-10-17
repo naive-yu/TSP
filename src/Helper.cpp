@@ -1,4 +1,5 @@
 #include "Helper.h"
+#include "Algorithm.h"
 #include "Ant_colony.h"
 #include "Genetic.h"
 #include "Particle.h"
@@ -40,7 +41,7 @@ void Helper::Ant_run() {
           for (int rho = 1; rho <= 3; rho++) {       // 0.1~0.3
             f_out << ants << "," << Q << "," << alpha * 0.1 << "," << beta
                   << "," << rho * 0.1 << ",";
-            mini = ANTINF, maxi = 0, avg = 0;
+            mini = ALGO_INF, maxi = 0, avg = 0;
             for (int i = 0; i < 5; i++) {
               Ant_colony antTSP =
                   Ant_colony(city, ants, 500, Q, alpha * 0.1, beta, rho * 0.1);
@@ -67,7 +68,7 @@ void Helper::Gen_run() {
   for (int individual_num = 100; individual_num <= 400; individual_num += 10) {
     for (int mutate_prob = 1; mutate_prob <= 4; mutate_prob++) {
       f_out << individual_num << "," << mutate_prob * 0.05 << ",";
-      mini = GENINF, maxi = 0, avg = 0;
+      mini = ALGO_INF, maxi = 0, avg = 0;
       for (int i = 0; i < 5; i++) {
         Genetic gen = Genetic(48, individual_num, 2000, mutate_prob * 0.05);
         gen.run();
@@ -91,7 +92,7 @@ void Helper::Gen_run2() {
        individual_num += 10) {                                   // 90~180
     for (int mutate_prob = 1; mutate_prob <= 4; mutate_prob++) { // 0.05~0.2
       f_out << individual_num << "," << mutate_prob * 0.05 << ",";
-      mini = GENINF, maxi = 0, avg = 0;
+      mini = ALGO_INF, maxi = 0, avg = 0;
       for (int i = 0; i < 5; i++) {
         Genetic gen = Genetic(70, individual_num, 2000, mutate_prob * 0.05);
         gen.run();
@@ -115,7 +116,7 @@ void Helper::Part_run() {
     for (int c1 = 1; c1 <= 9; c1++) {
       for (int c2 = 1; c2 <= 6; c2++) {
         f_out << w_min * 0.1 << "," << c1 * 0.1 << "," << c2 * 0.05 << ",";
-        mini = PARTINF, maxi = 0, avg = 0;
+        mini = ALGO_INF, maxi = 0, avg = 0;
         for (int i = 0; i < 5; i++) {
           Particle part =
               Particle(city, 600, 2000, 1, w_min * 0.1, c1 * 0.1, c2 * 0.05);
@@ -141,7 +142,7 @@ void Helper::Part_run2() {
     for (int c1 = 1; c1 <= 9; c1++) {
       for (int c2 = 1; c2 <= 6; c2++) {
         f_out << w_min * 0.1 << "," << c1 * 0.1 << "," << c2 * 0.05 << ",";
-        mini = PARTINF, maxi = 0, avg = 0;
+        mini = ALGO_INF, maxi = 0, avg = 0;
         for (int i = 0; i < 5; i++) {
           Particle part =
               Particle(city, 1800, 2000, 1, w_min * 0.1, c1 * 0.1, c2 * 0.05);

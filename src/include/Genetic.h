@@ -1,38 +1,32 @@
-#ifndef TSP_GENETIC_H
-#define TSP_GENETIC_H
-
+#pragma once
+#include "Algorithm.h"
+#include "Config.h"
 #include <QString>
 #include <vector>
 
-inline constexpr double GENINF = std::numeric_limits<double>::max();
-
-class Genetic {
+class Genetic : public Algorithm {
 public:
-  Genetic();
-  explicit Genetic(int city, int individual_num, int max_iter,
+  Genetic() = default;
+  Genetic(const Genetic &) = delete;
+  Genetic &operator=(const Genetic &) = delete;
+  Genetic(Genetic &&) = default;
+  Genetic &operator=(Genetic &&) = default;
+  Genetic(int city, int individual_num, int max_iter,
                    double mutate_prob);
+  Genetic(int city, GeneticParams &params);
   void init(const std::vector<std::vector<int>> &pos,
-            const std::vector<std::vector<double>> &dis);
-  void run();
-  QString output() const;
-  const std::vector<std::vector<int>> &get_route() const noexcept;
-  const std::vector<double> &get_best_aim() const noexcept;
-  const std::vector<double> &get_avg_aim() const noexcept;
-  ~Genetic();
+            const std::vector<std::vector<double>> &dis) override;
+  void run() override;
+  QString output() const override;
+  ~Genetic() override = default;
 
 private:
-  int city{}, individual_num{}, max_iter{}; // 城市数量、种群数量、最大迭代次数
-  double mutate_prob{};                     // 变异概率
-  std::shared_ptr<const std::vector<std::vector<int>>> position;          // 位置矩阵
-  std::shared_ptr<const std::vector<std::vector<double>>> distance; // 距离矩阵
-  std::vector<std::vector<int>> individuals;                        // 当前种群
-  std::vector<std::vector<int>> individuals_t; // 变异/交叉后种群
-  std::vector<std::vector<int>> best_route;    // 每次迭代最佳路径
-  std::vector<double> avg_aim;                 // 每次迭代的平均行程距离
-  std::vector<double> best_aim;                // 每次迭代最短行程距离
+  int individual_num_{};                        // 种群数量
+  double mutate_prob_{};                        // 变异概率
+  std::vector<std::vector<int>> individuals_;   // 当前种群
+  std::vector<std::vector<int>> individuals_t_; // 变异/交叉后种群
   std::vector<int> search(std::vector<int> &individual,
                           std::vector<int> &temp) const;
-
   double get_fitness(std::vector<int> &individual) const;
   std::vector<double>
   get_fitness(std::vector<std::vector<int>> &individuals) const;
@@ -44,5 +38,3 @@ private:
   void reverse();
   void clock_opt();
 };
-
-#endif // TSP_GENETIC_H
