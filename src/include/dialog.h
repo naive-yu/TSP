@@ -2,9 +2,9 @@
 #define DIALOG_H
 
 #include <QDialog>
+#include <memory>
 #include <vector>
 
-using namespace std;
 namespace Ui {
 class Dialog;
 }
@@ -14,14 +14,14 @@ class Dialog : public QDialog {
 
 public:
   explicit Dialog(QWidget *parent = nullptr);
-  void init(vector<double> *best, vector<double> *avg);
+  void init(const std::vector<double> &best, const std::vector<double> &avg);
   void paintEvent(QPaintEvent *event) override;
   ~Dialog() override;
 
 private:
   Ui::Dialog *ui;
-  vector<double> *best{};
-  vector<double> *avg{};
+  std::shared_ptr<const std::vector<double>> best_;
+  std::shared_ptr<const std::vector<double>> avg_;
   void paint_axis(QPainter *painter, double y_scale, double y_start,
                   double x_scale);
 };

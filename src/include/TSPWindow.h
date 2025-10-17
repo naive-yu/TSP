@@ -7,7 +7,6 @@
 #include <QMainWindow>
 #include <QTimer>
 
-
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class TSPWindow;
@@ -27,14 +26,16 @@ private slots:
 
 private:
   Ui::TSPWindow *ui;
-  int cur_algorithm{};
-  Ant_colony antTsp;
+  Ant_colony ant;
   Genetic gen;
   Particle particle;
-  vector<vector<int>> position;
-  vector<int> route;
-  void paintEvent(QPaintEvent *event) override;
-  int city{}, index{}, max_iter{};
+  int cur_algorithm{}, city{}, index{}, max_iter{};
+  std::vector<std::vector<int>> position;
+  std::vector<std::vector<double>> distance;
+  std::vector<int> route;
   QTimer *timer{};
+  void paintEvent(QPaintEvent *event) override;
+  void computeDistance();
 };
+
 #endif // TSPWINDOW_H

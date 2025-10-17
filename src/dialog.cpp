@@ -1,6 +1,7 @@
 #include "dialog.h"
 #include "ui_dialog.h"
 #include <QPainter>
+#include <memory>
 
 Dialog::Dialog(QWidget *parent) : QDialog(parent), ui(new Ui::Dialog) {
   ui->setupUi(this);
@@ -9,41 +10,42 @@ Dialog::Dialog(QWidget *parent) : QDialog(parent), ui(new Ui::Dialog) {
 Dialog::~Dialog() { delete ui; }
 
 void Dialog::paintEvent(QPaintEvent *event) {
+  std::vector<double> iter_best(*best_);
   if (!this->isHidden()) {
     // 绘制坐标轴
-    int sz = (int)best->size();
-    double mini = 1000000;
-    double maxi = 0;
-    for (int i = 0; i < sz; i++) {
-      (*best)[i] = min((*best)[i], mini);
-      maxi = max(maxi, (*avg)[i]);
+    int size = static_cast<int>(iter_best.size());
+    double mini = 1000000.0;
+    double maxi = 0.0;
+    for (int i = 0; i < size; i++) {
+      iter_best[i] = std::min(iter_best[i], mini);
+      maxi = std::max(maxi, (*avg_)[i]);
     }
-    maxi = max(maxi, (*best)[0]);
+    maxi = std::max(maxi, iter_best[0]);
     int width = this->width();
     int height = this->height();
     QPainter painter = QPainter(this);
-    double y_scale = (height - 100) / (maxi - (*best)[sz - 1]);
-    double y_start = (*best)[sz - 1];
-    double x_scale = (width - 100) / (sz + 0.0); // max_iter
+    double y_scale = (height - 100) / (maxi - iter_best[size - 1]);
+    double y_start = iter_best[size - 1];
+    double x_scale = (width - 100) / (size + 0.0); // max_iter
     paint_axis(&painter, y_scale, y_start, x_scale);
     // 画最短环路距离曲线
     painter.setWindow(0, height, width, -height); // 数学坐标系
     painter.setPen(QPen(Qt::red, 2));
     QPoint start, end;
-    start = QPoint(50, round(51 + ((*best)[0] - y_start) * y_scale));
-    for (int i = 1; i < sz; i++) {
+    start = QPoint(50, round(51 + (iter_best[0] - y_start) * y_scale));
+    for (int i = 1; i < size; i++) {
       end = QPoint((int)(i * x_scale) + 50,
-                   round(51 + ((*best)[i] - y_start) * y_scale));
+                   round(51 + (iter_best[i] - y_start) * y_scale));
       painter.drawLine(start, end);
       start = end;
     }
 
     // 画平均环路距离曲线
     painter.setPen(QPen(Qt::green, 2));
-    start = QPoint(50, round(51 + ((*avg)[0] - y_start) * y_scale));
-    for (int i = 1; i < sz; i++) {
+    start = QPoint(50, round(51 + ((*avg_)[0] - y_start) * y_scale));
+    for (int i = 1; i < size; i++) {
       end = QPoint((int)(i * x_scale) + 50,
-                   round(51 + ((*avg)[i] - y_start) * y_scale));
+                   round(51 + ((*avg_)[i] - y_start) * y_scale));
       painter.drawLine(start, end);
       start = end;
     }
@@ -51,9 +53,10 @@ void Dialog::paintEvent(QPaintEvent *event) {
   }
 }
 
-void Dialog::init(vector<double> *a, vector<double> *b) {
-  best = a;
-  avg = b;
+void Dialog::init(const std::vector<double> &best,
+                  const std::vector<double> &avg) {
+  best_ = std::make_shared<const std::vector<double>>(best);
+  avg_ = std::make_shared<const std::vector<double>>(avg);
 }
 
 void Dialog::paint_axis(QPainter *painter, double y_scale, double y_start,

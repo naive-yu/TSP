@@ -1,85 +1,51 @@
 #include "Genetic.h"
-#include "resource.h"
+#include <algorithm>
+#include <chrono>
 #include <iostream>
+#include <memory>
+#include <numeric>
 #include <qDebug>
 #include <random>
 
-using namespace std;
 Genetic::Genetic() = default;
 Genetic::Genetic(int city, int individual_num, int max_iter, double mutate_prob)
     : city(city), individual_num(individual_num), max_iter(max_iter),
-      mutate_prob(mutate_prob) {
-  init();
-}
+      mutate_prob(mutate_prob) {}
 
-void Genetic::init() {
-  if (city == 29) {
-    position = bayg29_position;
-    distance = &bayg29_distance;
-  } else if (city == 48) {
-    position = att48_position;
-    distance = &att48_distance;
-  } else if (city == 70) {
-    position = st70_position;
-    distance = &st70_distance;
-  } else
-    cout << "城市数量异常！";
-  // 开辟空间
-  individuals.resize(individual_num);
-  for (int i = 0; i < individual_num; i++)
-    individuals[i].resize(city);
-  individuals_t.resize(individual_num);
-  for (int i = 0; i < individual_num; i++)
-    individuals_t[i].resize(city);
-  best_route.resize(max_iter);
-  for (int i = 0; i < max_iter; i++)
-    best_route[i].resize(city);
-  avg_aim.resize(max_iter);
-  best_aim.resize(max_iter);
+void Genetic::init(const std::vector<std::vector<int>> &pos,
+                   const std::vector<std::vector<double>> &dis) {
+  position = std::make_shared<const std::vector<std::vector<int>>>(pos);
+  distance = std::make_shared<const std::vector<std::vector<double>>>(dis);
+
+  // 种群初始化
+  individuals.assign(individual_num, std::vector<int>(city));
+  individuals_t.assign(individual_num, std::vector<int>(city));
+  best_route.assign(max_iter, std::vector<int>(city));
+  avg_aim.assign(max_iter, 0.0);
+  best_aim.assign(max_iter, GENINF);
 }
 
 void Genetic::run() {
-  // 生成初始种群
-  // 依据贪心思路构建
-  // random_device rd;
-  //    default_random_engine e(time(0));
-  //    for(int j=0;j<individual_num;j++){
-  //        vector<int> route(city);//路径矩阵
-  //        vector<bool> visit(city);//访问矩阵
-  //        uniform_int_distribution<signed> u(0,city-1);
-  //        route[0]=u(e);
-  //        visit[route[0]]=true;
-  //        individuals[j][0]=route[0];
-  //        individuals_t[j][0]=route[0];
-  //        for(int i=1;i<city;i++){
-  //            //找到距离最近的城市
-  //            int index=-1;
-  //            double best=INF;
-  //            for(int k=0;k<city;k++){
-  //                if(!visit[k]&&(*distance)[route[i-1]][k]<best){
-  //                    index=k;
-  //                    best=(*distance)[route[i-1]][k];
-  //                }
-  //            }
-  //            route[i]=index;
-  //            individuals[j][i]=index;
-  //            individuals_t[j][i]=index;
-  //            visit[index]=true;
-  //        }
-  //    }
-  // 随机构建
-  vector<int> route(city);
-  for (int i = 0; i < city; i++)
-    route[i] = i;
-  for (int i = 0; i < individual_num; i++) {
-    individuals[i] = route;
-    individuals_t[i] = route;
-    shuffle(route.begin(), route.end(), std::mt19937(std::random_device()()));
+  // 线程局部随机数引擎
+  static thread_local std::mt19937 rng(static_cast<unsigned>(
+      std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+
+  // 随机构建生成初始种群
+  std::vector<int> base(city);
+  for (int i = 0; i < city; i++) {
+    base[i] = i;
   }
+  for (int i = 0; i < individual_num; i++) {
+    shuffle(base.begin(), base.end(), rng);
+    individuals[i] = base;
+    individuals_t[i] = base;
+  }
+
   // 开始遗传算法
-  for (int count = 0; count < max_iter; count++) {
+  for (int gen = 0; gen < max_iter; gen++) {
     // 时针优化，统一采用顺时针方案
     clock_opt();
+
     // 交叉
     cross();
     // 变异
@@ -88,86 +54,84 @@ void Genetic::run() {
     select();
     // 进化逆转
     reverse();
+
     // 找出此代最佳路径
-    vector<double> fitness = get_fitness(individuals);
-    avg_aim[count] =
-        individual_num / accumulate(fitness.begin(), fitness.end(), 0.0);
+    std::vector<double> fitness = get_fitness(individuals);
+    double fitness_sum = std::accumulate(fitness.begin(), fitness.end(), 0.0);
+    avg_aim[gen] = static_cast<double>(individual_num) / fitness_sum;
     double max_fitness = 0;
-    int max_index = -1;
+    int max_idx = 0;
     for (int i = 0; i < individual_num; i++) {
       if (fitness[i] > max_fitness) {
         max_fitness = fitness[i];
-        max_index = i;
+        max_idx = i;
       }
     }
-    best_aim[count] = 1.0 / max_fitness;
-    // cout<<best_aim[count]<<endl;
-    best_route[count] = individuals[max_index];
+    best_aim[gen] = (max_fitness > 0.0) ? 1.0 / max_fitness : GENINF;
+    best_route[gen] = individuals[max_idx];
   }
 }
 
-vector<int> Genetic::search(vector<int> &individual, vector<int> &temp) const {
-  int cross_num = (int)temp.size();
-  vector<int> index(cross_num);
+std::vector<int> Genetic::search(std::vector<int> &individual,
+                                 std::vector<int> &temp) const {
+  int cross_num = static_cast<int>(temp.size());
+  std::vector<int> idx(cross_num);
   for (int i = 0; i < cross_num; i++) {
     for (int j = 0; j < city; j++) {
       if (individual[j] == temp[i]) {
-        index[i] = j;
+        idx[i] = j;
         break;
       }
     }
   }
-  return index;
+  return idx;
 }
 
-double Genetic::get_fitness(vector<int> &route) {
+double Genetic::get_fitness(std::vector<int> &route) const {
+  if (!distance || route.empty())
+    return 0.0;
   double dis = (*distance)[route[city - 1]][route[0]];
-  for (int i = 0; i < city - 1; i++) {
+  for (int i = 0; i < city - 1; ++i) {
     dis += (*distance)[route[i]][route[i + 1]];
   }
-  return 1.0 / dis;
+  return (dis > 0.0) ? 1.0 / dis : 0.0;
 }
 
-vector<double> Genetic::get_fitness(vector<vector<int>> &all_individuals) {
-  vector<double> fitness(all_individuals.size());
-  int index = 0;
-  double dis;
-  for (vector<int> &route : all_individuals) {
-    dis = (*distance)[route[city - 1]][route[0]];
-    for (int i = 0; i < city - 1; i++) {
-      dis += (*distance)[route[i]][route[i + 1]];
-    }
-    fitness[index++] = 1.0 / dis;
+std::vector<double>
+Genetic::get_fitness(std::vector<std::vector<int>> &all_individuals) const {
+  std::vector<double> fitness;
+  fitness.reserve(all_individuals.size());
+  for (std::vector<int> &route : all_individuals) {
+    fitness.push_back(get_fitness(route));
   }
   return fitness;
 }
 
 void Genetic::cross() {
-  // random_device rd;
-  default_random_engine e(time(0));
-  uniform_int_distribution<signed> u(0, city - 1);
+  static thread_local std::mt19937 rng(static_cast<unsigned>(
+      std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+  std::uniform_int_distribution<int> u(0, std::max(0, city - 1));
   for (int i = 0; i < individual_num / 2; i++) {
-    int pos1 = u(e); // 该位置后cross_num个城市
-    int pos2 = u(e);
-    // cout<<pos1<<","<<pos2<<endl;
+    int pos1 = u(rng); // 该位置后cross_num个城市
+    int pos2 = u(rng);
+    // std::cout<<pos1<<","<<pos2<<endl;
     if (pos2 < pos1) {
       int temp = pos1;
       pos1 = pos2;
       pos2 = temp;
     }
     int cross_num = pos2 - pos1 + 1;
-    vector<int> temp1(cross_num);
-    vector<int> temp2(cross_num);
-    vector<int> index;
+    std::vector<int> temp1(cross_num);
+    std::vector<int> temp2(cross_num);
+    std::vector<int> index;
     for (int j = 0; j < cross_num; j++) {
       temp1[j] = individuals_t[i][pos1 + j];
       temp2[j] = individuals_t[individual_num - i - 1][pos1 + j];
     }
     // 记录第二条染色体中对应的下标
     index = search(individuals_t[individual_num - i - 1], temp1);
-    if ((int)index.size() != cross_num) {
-      cout << "交叉异常1！";
-      // throw exception();
+    if (static_cast<int>(index.size()) != cross_num) {
+      std::cout << "交叉异常1! ";
     }
     // 第二个染色体相应位置并执行交换
     for (int k = 0; k < cross_num; k++) {
@@ -186,12 +150,12 @@ void Genetic::cross() {
       }
     }
     if (isError(individuals_t[individual_num - i - 1])) {
-      cout << "error!" << endl;
+      std::cout << "error!" << std::endl;
     }
     // 对第一个染色体进行处理和规范化
     index = search(individuals_t[i], temp2);
     if ((int)index.size() != cross_num) {
-      cout << "交叉异常2！";
+      std::cout << "交叉异常2! ";
     }
     for (int k = 0; k < cross_num; k++) {
       individuals_t[i][pos1 + k] = temp2[k];
@@ -209,41 +173,36 @@ void Genetic::cross() {
       }
     }
     if (isError(individuals_t[i])) {
-      cout << "error!" << endl;
+      std::cout << "error!" << std::endl;
     }
   }
 }
 
 void Genetic::mutate() {
   // 采用基于位置的变异
-  // random_device rd;
-  default_random_engine e(time(0));
-  uniform_real_distribution<double> u1(0, 1);
-  uniform_int_distribution<signed> u2(0, city - 1);
-  vector<int> route;
-  for (int i = 0; i < individual_num; i++) {
-    if (u1(e) < mutate_prob) {
-      int index1 = u2(e);
-      int index2 = u2(e);
-      if (index1 != index2) {
-        route = individuals_t[i];
-        route[index1] = individuals_t[i][index2];
-        route[index2] = individuals_t[i][index1];
-        individuals_t[i] = route;
-        // if(get_fitness(route)>get_fitness(individuals_t[i]))individuals_t[i]=route;
+  static thread_local std::mt19937 rng(static_cast<unsigned>(
+      std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+  std::uniform_real_distribution<double> u1(0.0, 1.0);
+  std::uniform_int_distribution<signed> u2(0, std::max(0, city - 1));
+
+  for (int i = 0; i < individual_num; ++i) {
+    if (u1(rng) < mutate_prob) {
+      int idx1 = u2(rng);
+      int idx2 = u2(rng);
+      if (idx1 != idx2) {
+        std::swap(individuals_t[i][idx2], individuals_t[i][idx1]);
+        // or larger fitness logits
       }
     }
   }
 }
 
 void Genetic::select() {
-  // 合并新旧种群
-  // 35800，individuals优先,参数48,100,400,4,0.1
-  // 使用锦标赛算法
-  vector<double> fit1 = get_fitness(individuals);
-  vector<double> fit2 = get_fitness(individuals_t);
+  // 使用锦标赛算法合并新旧种群
+  std::vector<double> fit1 = get_fitness(individuals);
+  std::vector<double> fit2 = get_fitness(individuals_t);
   int new_i = 0;
-  vector<int> route;
+  std::vector<int> route;
   double fit;
   for (int i = 0; i < individual_num / 10; i++) {
     // 10个一组，每组选5个
@@ -266,7 +225,7 @@ void Genetic::select() {
   }
   for (int i = 0; i < individual_num / 10; i++) {
     // 10个一组，每组选5个
-    vector<bool> visit(10, false);
+    std::vector<bool> visit(10, false);
     for (int j = 0; j < 5; j++) {
       int index = -1;
       double maxi = 0;
@@ -281,55 +240,27 @@ void Genetic::select() {
       ++new_i;
     }
   }
-  for (int i = 0; i < individual_num; i++)
+  for (int i = 0; i < individual_num; i++) {
     individuals_t[i] = individuals[i];
-  // 计算种群适应度
-  //    vector<vector<int>> all_individuals = individuals_t;
-  //    all_individuals.insert(all_individuals.end(),individuals.begin(),individuals.end());
-  //    vector<double> fitness=get_fitness(all_individuals);
-  //    //使用轮盘赌算法
-  //    random_device rd;
-  //    default_random_engine e(rd());
-  //    uniform_real_distribution<double> u(0,1);
-  //    double sum=0;
-  //    vector<bool> visit(individual_num*2);
-  //    for(int i=0;i<individual_num*2;i++){
-  //        sum+=fitness[i];
-  //    }
-  //    for(int i=0;i<individual_num;i++){
-  //        int select=-1;
-  //        while(select==-1){
-  //            double p=u(e);
-  //            for(int j=0;j<individual_num*2;j++){
-  //                if(!visit[j]&&p<=fitness[j]/sum){
-  //                    select=j;
-  //                    break;
-  //                }
-  //            }
-  //        }
-  //        visit[select]=true;
-  //        sum-=fitness[select];
-  ////        if(isError(all_individuals[select])){
-  ////            cout<<"error!"<<endl;
-  ////        }
-  //        individuals[i]=all_individuals[select];
-  //        individuals_t[i]=all_individuals[select];
-  //    }
+  }
+  // 或者使用轮盘赌算法
 }
 
 void Genetic::clock_opt() {
   for (int i = 0; i < individual_num; i++) {
     long long s = 0;
-    int j;
-    for (j = 0; j < city - 1; j++) {
-      s +=
-          (position[individuals[i][j]][0] * position[individuals[i][j + 1]][1] -
-           position[individuals[i][j]][1] * position[individuals[i][j + 1]][0]);
+    for (int j = 0; j < city - 1; j++) {
+      s += (*position)[individuals[i][j]][0] *
+               (*position)[individuals[i][j + 1]][1] -
+           (*position)[individuals[i][j]][1] *
+               (*position)[individuals[i][j + 1]][0];
     }
-    s += (position[individuals[i][j]][0] * position[individuals[i][0]][1] -
-          position[individuals[i][j]][1] * position[individuals[i][0]][0]);
-    // cout<<"s:"<<s<<endl;
-    if (s > 0) { // 顺时针
+    s += (*position)[individuals[i][city - 1]][0] *
+             (*position)[individuals[i][0]][1] -
+         (*position)[individuals[i][city - 1]][1] *
+             (*position)[individuals[i][0]][0];
+    // 顺时针
+    if (s > 0) {
       std::reverse(individuals[i].begin(), individuals[i].end());
       std::reverse(individuals_t[i].begin(), individuals_t[i].end());
     }
@@ -337,81 +268,82 @@ void Genetic::clock_opt() {
 }
 
 void Genetic::reverse() {
-  //    //random_device rd;
-  default_random_engine e(time(0));
-  uniform_int_distribution<signed> u(0, city - 1);
-  int cnt; // 交换次数
-  vector<int> route(city);
-  for (int i = 0; i < individual_num; i++) {
+  static thread_local std::mt19937 rng(static_cast<unsigned>(
+      std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+  std::uniform_int_distribution<signed> u(0, std::max(0, city - 1));
+
+  for (int i = 0; i < individual_num; ++i) {
     // 选取区间
-    route = individuals[i];
-    int pos1 = u(e);
-    int pos2 = u(e);
+    std::vector<int> route = individuals[i];
+    int pos1 = u(rng);
+    int pos2 = u(rng);
     if (pos2 < pos1) {
-      int temp = pos1;
-      pos1 = pos2;
-      pos2 = temp;
+      std::swap(pos1, pos2);
     }
-    cnt = (pos2 - pos1 + 1) / 2;
+    int cnt = (pos2 - pos1 + 1) / 2;
     for (int j = 0; j < cnt; j++) {
-      int temp = route[pos1 + j];
-      route[pos1 + j] = route[pos2 - j];
-      route[pos2 - j] = temp;
+      std::swap(route[pos1 + j], route[pos2 - j]);
     }
     if (get_fitness(route) > get_fitness(individuals[i])) {
-      individuals[i] = route; // 进化
+      individuals[i] = route;
       individuals_t[i] = route;
     }
   }
 }
 
-QString Genetic::output() {
-  // 找到最短路径
-  int index = 0;
+QString Genetic::output() const {
+  int idx = 0;
   double best = best_aim[0];
   for (int i = 1; i < max_iter; i++) {
     if (best_aim[i] < best) {
       best = best_aim[i];
-      index = i;
+      idx = i;
     }
   }
+
   QString str = "";
-  if (city == 48)
+  if (city == 29) {
+    str = "bayg29";
+  } else if (city == 48) {
     str = "att48";
-  else if (city == 70)
+  } else if (city == 70) {
     str = "st70";
-  QString res = QString("（遗传算法，%1）最短环路距离：%2\n最短环路：")
+  }
+  QString res = QString("( 遗传算法 %1 ) 最短环路距离: %2\n最短环路: ")
                     .arg(str)
-                    .arg(best_aim[index]);
+                    .arg(best_aim[idx]);
   for (int i = 0; i < city; i++) {
-    res.append(QString("%1, ").arg(best_route[index][i] + 1));
+    res.append(QString("%1, ").arg(best_route[idx][i] + 1));
   }
   return res;
 }
 
-bool Genetic::isExist(int c, vector<int> t) const {
-  for (int i = 0; i < t.size(); i++) {
-    if (t[i] == c)
+bool Genetic::isExist(int city, std::vector<int> &individual) const {
+  return std::find(individual.begin(), individual.end(), city) !=
+         individual.end();
+}
+
+bool Genetic::isError(std::vector<int> &individual) const {
+  std::vector<bool> visit(city, false);
+  for (int city : individual) {
+    if (city < 0 || city >= this->city || visit[city]) {
       return true;
+    }
+    visit[city] = true;
   }
   return false;
 }
 
-bool Genetic::isError(vector<int> &individual) const {
-  vector<bool> visit(city, false);
-  for (int i = 0; i < city; i++) {
-    if (visit[individual[i]])
-      return true;
-    else
-      visit[individual[i]] = true;
-  }
-  return false;
+const std::vector<std::vector<int>> &Genetic::get_route() const noexcept {
+  return best_route;
 }
 
-vector<vector<int>> *Genetic::get_route() { return &best_route; }
+const std::vector<double> &Genetic::get_best_aim() const noexcept {
+  return best_aim;
+}
 
-vector<double> *Genetic::get_best_aim() { return &best_aim; }
-
-vector<double> *Genetic::get_avg_aim() { return &avg_aim; }
+const std::vector<double> &Genetic::get_avg_aim() const noexcept {
+  return avg_aim;
+}
 
 Genetic::~Genetic() = default;
