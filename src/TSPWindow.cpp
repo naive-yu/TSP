@@ -9,13 +9,14 @@
 #include <QPainter>
 #include <cmath>
 #include <memory>
+#include <qstringliteral.h>
 #include <qtimer.h>
 #include <vector>
 
 TSPWindow::TSPWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::TSPWindow) {
   ui->setupUi(this);
-  cfg_ = std::make_shared<Config>("config/tsp_config.ini");
+  cfg_ = std::make_shared<Config>(QStringLiteral("../config/tsp_config.ini"));
   timer = nullptr;
 }
 
@@ -40,7 +41,8 @@ void TSPWindow::showDialog() {
     timer->stop();
   }
   ui->listWidget->addItem(algo->output());
-  auto dialog = new Dialog();
+  auto dialog = new Dialog(this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose, true); // 自动关闭时删除
   dialog->init(algo->get_best_aim(), algo->get_avg_aim());
   dialog->show();
 }
@@ -55,16 +57,19 @@ void TSPWindow::resetTimer() noexcept {
 
 void TSPWindow::deal_menu(QAction *action) {
   if (action->objectName() == "action11") {
+    resetTimer();
     city_ = 29;
     position = bayg29_position;
     computeDistance();
     route = nullptr;
   } else if (action->objectName() == "action12") {
+    resetTimer();
     city_ = 48;
     position = att48_position;
     route = nullptr;
     computeDistance();
   } else if (action->objectName() == "action13") {
+    resetTimer();
     city_ = 70;
     position = st70_position;
     route = nullptr;
@@ -120,8 +125,8 @@ void TSPWindow::deal_menu(QAction *action) {
     connect(timer, &QTimer::timeout, this, &TSPWindow::show_route);
     timer->start(100);
   } else if (action->objectName() == "action231") {
-    auto parms = cfg_->getParticleParams(city_);
-    algo = std::make_unique<Particle>(city_, parms);
+    auto params = cfg_->getParticleParams(city_);
+    algo = std::make_unique<Particle>(city_, params);
     algo->init(position, distance);
     algo->run();
 
@@ -145,17 +150,13 @@ void TSPWindow::deal_menu(QAction *action) {
 
 void TSPWindow::show_route() {
   if (algo == nullptr) {
-    if (timer != nullptr) {
-      timer->stop();
-      return;
-    }
+    resetTimer();
+    return;
   }
 
   const auto &routes = algo->get_route();
   if (routes.empty()) {
-    if (timer != nullptr) {
-      timer->stop();
-    }
+    resetTimer();
     return;
   }
 
@@ -164,15 +165,17 @@ void TSPWindow::show_route() {
   }
 
   if (idx_ >= max_iter_) {
+    resetTimer();
     showDialog();
     return;
   }
 
-  route = std::make_shared<std::vector<int>>(algo->get_route()[idx_]);
+  route = std::make_shared<std::vector<int>>(routes[idx_]);
   update();
 
   ++idx_;
   if (idx_ >= max_iter_) {
+    resetTimer();
     showDialog();
   }
 }

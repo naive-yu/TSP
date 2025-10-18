@@ -11,7 +11,7 @@ public:
   Particle &operator=(const Particle &) = delete;
   Particle(Particle &&) = default;
   Particle &operator=(Particle &&) = default;
-  Particle(int city, int particle, int max_iter, double max_w, double min_w,
+  Particle(int city, int max_iter, int particle, double max_w, double min_w,
            double c1, double c2);
   Particle(int city, ParticleParams &params);
   void init(const std::vector<std::vector<int>> &pos,

@@ -5,7 +5,7 @@
 #include <numeric>
 #include <random>
 
-Particle::Particle(int city, int particle_num, int max_iter, double max_w,
+Particle::Particle(int city, int max_iter, int particle_num, double max_w,
                    double min_w, double c1, double c2)
     : Algorithm(city, max_iter, "Particle"), particle_num_(particle_num),
       max_w_(max_w), min_w_(min_w), c1_(c1), c2_(c2) {}

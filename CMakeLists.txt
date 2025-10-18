@@ -25,7 +25,8 @@ set(PROJECT_SOURCES
   src/include/TSPWindow.h
   src/TSPWindow.cpp
   src/ui/TSPWindow.ui
-  src/ui/dialog.ui
+  src/ui/Dialog.ui
+  config/tsp_config.ini
   ${TS_FILES}
   src/include/Config.h
   src/Config.cpp

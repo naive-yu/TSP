@@ -1,6 +1,6 @@
 #include "Dialog.h"
 #include "Algorithm.h"
-#include "ui_dialog.h"
+#include "ui_Dialog.h"
 #include <QPainter>
 #include <memory>
 

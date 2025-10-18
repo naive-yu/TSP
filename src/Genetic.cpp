@@ -8,7 +8,7 @@
 #include <qDebug>
 #include <random>
 
-Genetic::Genetic(int city, int individual_num, int max_iter, double mutate_prob)
+Genetic::Genetic(int city, int max_iter, int individual_num, double mutate_prob)
     : Algorithm(city, max_iter, "Genetic"), individual_num_(individual_num),
       mutate_prob_(mutate_prob) {}
 

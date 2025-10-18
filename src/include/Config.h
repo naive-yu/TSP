@@ -28,8 +28,7 @@ struct ParticleParams {
 
 class Config {
 public:
-  explicit Config(
-      const QString &path = QStringLiteral("config/tsp_config.ini"));
+  explicit Config(const QString &path);
   AntParams getAntParams(int city) const;
   GeneticParams getGeneticParams(int city) const;
   ParticleParams getParticleParams(int city) const;
