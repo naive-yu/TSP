@@ -19,10 +19,14 @@ public:
                const std::vector<std::vector<int>> &pos,
                const std::vector<std::vector<double>> &dis, bool stepByStep);
   void stop();
+  void pause();
+  void resume();
+  void setInterval(int interval);
+
 signals:
   void finished(const QString &result, const std::vector<double> &best,
                 const std::vector<double> &avg);
-  void routeUpdated(const std::vector<int> &route, int iter);
+  void routeUpdated(const std::vector<int> &route, int iter, int max_iter);
   void progressed(int iter, int max_iter);
   void errorOccured(const QString &error);
 

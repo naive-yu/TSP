@@ -53,3 +53,21 @@ void AlgoExecuter::stop() {
     worker_thread_ = nullptr;
   }
 }
+
+void AlgoExecuter::pause() {
+  if (worker_thread_ && worker_) {
+    worker_->pause();
+  }
+}
+
+void AlgoExecuter::resume() {
+  if (worker_thread_ && worker_) {
+    worker_->resume();
+  }
+}
+
+void AlgoExecuter::setInterval(int interval) {
+  if (worker_thread_ && worker_) {
+    worker_->setInterval(interval);
+  }
+}

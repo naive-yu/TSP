@@ -127,8 +127,25 @@
     <addaction name="action12"/>
     <addaction name="action13"/>
    </widget>
+   <widget class="QMenu" name="menu_6">
+    <property name="title">
+     <string>执行</string>
+    </property>
+    <addaction name="action61"/>
+    <addaction name="action62"/>
+   </widget>
+   <widget class="QMenu" name="menu_5">
+    <property name="title">
+     <string>动画速率</string>
+    </property>
+    <addaction name="action51"/>
+    <addaction name="action52"/>
+    <addaction name="action53"/>
+   </widget>
    <addaction name="menu_1"/>
    <addaction name="menu_2"/>
+   <addaction name="menu_6"/>
+   <addaction name="menu_5"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">
    <property name="font">
@@ -210,6 +227,31 @@
   <action name="action13">
    <property name="text">
     <string>st70</string>
+   </property>
+  </action>
+  <action name="action51">
+   <property name="text">
+    <string>1x</string>
+   </property>
+  </action>
+  <action name="action52">
+   <property name="text">
+    <string>2x</string>
+   </property>
+  </action>
+  <action name="action53">
+   <property name="text">
+    <string>5x</string>
+   </property>
+  </action>
+  <action name="action61">
+   <property name="text">
+    <string>继续</string>
+   </property>
+  </action>
+  <action name="action62">
+   <property name="text">
+    <string>暂停</string>
    </property>
   </action>
  </widget>

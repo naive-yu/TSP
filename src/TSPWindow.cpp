@@ -5,8 +5,11 @@
 #include "resource.h"
 #include "ui_TSPWindow.h"
 #include <QPainter>
+#include <cassert>
 #include <cmath>
 #include <memory>
+#include <qobjectdefs.h>
+#include <string>
 #include <vector>
 
 TSPWindow::TSPWindow(QWidget *parent)
@@ -20,9 +23,7 @@ TSPWindow::TSPWindow(QWidget *parent)
           &TSPWindow::show_route);
 }
 
-TSPWindow::~TSPWindow() {
-  delete ui;
-}
+TSPWindow::~TSPWindow() { delete ui; }
 
 void TSPWindow::computeDistance() {
   int n = static_cast<int>(position.size());
@@ -45,8 +46,11 @@ void TSPWindow::showDialog(const QString &result,
   dialog->show();
 }
 
-void TSPWindow::reset() noexcept {
-  executer_->stop();
+void TSPWindow::reset() noexcept { executer_->stop(); }
+
+void TSPWindow::setInterval(int interval) const {
+  assert(interval > 0);
+  executer_->setInterval(interval);
 }
 
 void TSPWindow::resetTimer() noexcept {
@@ -64,18 +68,21 @@ void TSPWindow::deal_menu(QAction *action) {
     position = bayg29_position;
     computeDistance();
     route = nullptr;
+    ui->menu_1->setActiveAction(action);
   } else if (action->objectName() == "action12") {
     reset();
     city_ = 48;
     position = att48_position;
     route = nullptr;
     computeDistance();
+    ui->menu_1->setActiveAction(action);
   } else if (action->objectName() == "action13") {
     reset();
     city_ = 70;
     position = st70_position;
     route = nullptr;
     computeDistance();
+    ui->menu_1->setActiveAction(action);
   }
 
   if (city_ != 0) {
@@ -97,60 +104,85 @@ void TSPWindow::deal_menu(QAction *action) {
   } else if (action->objectName() == "action232") {
     executer_->execute(Particle_Type, city_, position, distance, true);
   }
+
+  if (action->objectName() == "action51") {
+    ui->menu_5->setActiveAction(action);
+    setInterval(200);
+  } else if (action->objectName() == "action52") {
+    setInterval(50);
+    ui->menu_5->setActiveAction(action);
+  } else if (action->objectName() == "action53") {
+    ui->menu_5->setActiveAction(action);
+    setInterval(20);
+  }
+
+  if (action->objectName() == "action61") {
+    ui->menu_6->setActiveAction(action);
+    executer_->resume();
+  } else if (action->objectName() == "action62") {
+    executer_->pause();
+    ui->menu_6->setActiveAction(action);
+  }
 }
 
-void TSPWindow::show_route(const std::vector<int> &route, int iter) {
+void TSPWindow::show_route(const std::vector<int> &route, int iter,
+                           int max_iter) {
   qDebug() << "show_route call: iter " << iter << " city " << route.size();
+  QString str = QString("show_route: %1/%2").arg(iter).arg(max_iter);
+  ui->statusbar->showMessage(str);
   this->route = std::make_shared<const std::vector<int>>(route);
   update();
 }
 
 void TSPWindow::paintEvent(QPaintEvent *event) {
-  // 绘制 QWidget
-  int menu_height = ui->menubar->height() + 2;
   QPainter painter(this);
-  int width = ui->widget->width() - 4;
-  int height = ui->widget->height() - 4;
+  painter.setRenderHint(QPainter::Antialiasing, true); // 开启抗锯齿
+
+  int menu_height = ui->menubar->height() + 3;
+  int width = ui->widget->width() - 6;
+  int height = ui->widget->height() - 6;
+
+  // 计算缩放比例
   int max_x = 0, max_y = 0;
-  for (int i = 0; i < city_; i++) {
-    max_x = std::max(max_x, position[i][0]);
-    max_y = std::max(max_y, position[i][1]);
+  for (const auto &pos : position) {
+    max_x = std::max(max_x, pos[0]);
+    max_y = std::max(max_y, pos[1]);
   }
   double scale_x = width / static_cast<double>(max_x);
   double scale_y = height / static_cast<double>(max_y);
+
   if (city_ != 0) {
     // 绘制城市位置点
-    painter.setPen(QPen(Qt::black, 5));
-    painter.setFont(QFont("Arial", 30));
-    for (int i = 0; i < city_; i++) {
-      painter.drawEllipse(2 + (int)(position[i][0] * scale_x),
-                          menu_height + (int)(position[i][1] * scale_y), 2, 2);
+    painter.setPen(QPen(Qt::black, 5)); // 设置点的大小和颜色
+    for (const auto &pos : position) {
+      painter.drawEllipse(
+          QPointF(3 + pos[0] * scale_x, menu_height + pos[1] * scale_y), 4, 4);
     }
   }
+
   if (route != nullptr && static_cast<int>(route->size()) == city_) {
     // 绘制当前路线
-    painter.setPen(QPen(Qt::darkBlue, 1));
-    QPoint start, end;
-    for (int i = 0; i < city_ - 1; i++) {
-      start = QPoint(2 + (int)(position[(*route)[i]][0] * scale_x),
-                     menu_height + (int)(position[(*route)[i]][1] * scale_y));
-      end = QPoint(2 + (int)(position[(*route)[i + 1]][0] * scale_x),
-                   menu_height + (int)(position[(*route)[i + 1]][1] * scale_y));
+    painter.setPen(QPen(Qt::blue, 2)); // 设置线条颜色和粗细
+    QPointF start, end;
+    for (size_t i = 0; i < city_ - 1; ++i) {
+      start = QPointF(3 + position[(*route)[i]][0] * scale_x,
+                      menu_height + position[(*route)[i]][1] * scale_y);
+      end = QPointF(3 + position[(*route)[i + 1]][0] * scale_x,
+                    menu_height + position[(*route)[i + 1]][1] * scale_y);
       painter.drawLine(start, end);
     }
-    start =
-        QPoint(2 + (int)(position[(*route)[city_ - 1]][0] * scale_x),
-               menu_height + (int)(position[(*route)[city_ - 1]][1] * scale_y));
-    end = QPoint(2 + (int)(position[(*route)[0]][0] * scale_x),
-                 menu_height + (int)(position[(*route)[0]][1] * scale_y));
+    // 绘制最后一条线，连接起点和终点
+    start = QPointF(3 + position[(*route)[city_ - 1]][0] * scale_x,
+                    menu_height + position[(*route)[city_ - 1]][1] * scale_y);
+    end = QPointF(3 + position[(*route)[0]][0] * scale_x,
+                  menu_height + position[(*route)[0]][1] * scale_y);
     painter.drawLine(start, end);
   }
 }
 
-template <typename T> 
-void TSPWindow::print(std::vector<T> &nums) const {
+template <typename T> void TSPWindow::print(std::vector<T> &nums) const {
   QString str;
-  for (T &t: nums) {
+  for (T &t : nums) {
     str += std::to_string(t);
   }
   qDebug() << str;
