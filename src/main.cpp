@@ -2,10 +2,12 @@
 #include <QApplication>
 #include <QDateTime>
 #include <QFile>
+#include <QDir>
 #include <QLocale>
 #include <QLoggingCategory>
 #include <QTextStream>
 #include <QTranslator>
+#include <qcoreapplication.h>
 
 // #ifdef Q_OS_WIN
 // #include <iostream>
@@ -57,6 +59,9 @@ int main(int argc, char *argv[]) {
   QApplication a(argc, argv);
   // 安装自定义日志处理器
   qInstallMessageHandler(customLogHandler);
+
+  qCInfo(QLoggingCategory("main")) << "Startup working dir:" << QDir::currentPath();
+  qCInfo(QLoggingCategory("main")) << "Application dir:" << QCoreApplication::applicationDirPath();
 
   QTranslator translator;
   const QStringList uiLanguages = QLocale::system().uiLanguages();

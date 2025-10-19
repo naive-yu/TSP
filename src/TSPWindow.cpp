@@ -6,6 +6,8 @@
 #include "ui_TSPWindow.h"
 #include <QPainter>
 #include <QLoggingCategory>
+#include <QFile>
+#include <QDir>
 #include <cassert>
 #include <cmath>
 #include <memory>
@@ -18,8 +20,36 @@ Q_LOGGING_CATEGORY(TSPWindowLog, "TSPWindow")
 TSPWindow::TSPWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::TSPWindow), timer(nullptr) {
   ui->setupUi(this);
-  QString configPath = QCoreApplication::applicationDirPath() + "/config/tsp_config.ini";
-  cfg_ = std::make_shared<Config>(configPath);
+
+  // 尝试多个候选配置路径，优先级从高到低
+  const QStringList candidates = {
+      // 部署时常见位置：可执行文件目录下的 config 目录
+      QCoreApplication::applicationDirPath() + "/config/tsp_config.ini",
+      // 可执行文件目录下直接的配置文件
+      QCoreApplication::applicationDirPath() + "/tsp_config.ini",
+      // 工程运行时常用的相对路径（开发环境）
+      QCoreApplication::applicationDirPath() + "/../config/tsp_config.ini",
+      // 源代码位置（开发时 CMake 的源目录）
+      QStringLiteral("../config/tsp_config.ini")
+  };
+
+  QString chosen;
+  for (const QString &p : candidates) {
+    QFile f(p);
+    if (f.exists()) {
+      chosen = QDir::cleanPath(p);
+      qCInfo(TSPWindowLog) << "Using config file:" << chosen;
+      break;
+    }
+  }
+
+  if (chosen.isEmpty()) {
+    // 若没有找到，降级到默认相对路径（保留原行为），并记录警告
+    chosen = QCoreApplication::applicationDirPath() + "/config/tsp_config.ini";
+    qCWarning(TSPWindowLog) << "Config file not found in candidates, will try default:" << chosen;
+  }
+
+  cfg_ = std::make_shared<Config>(chosen);
   executer_ = std::make_unique<AlgoExecuter>(cfg_, this);
   connect(executer_.get(), &AlgoExecuter::finished, this,
           &TSPWindow::showDialog);
