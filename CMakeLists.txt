@@ -99,6 +99,109 @@ set_target_properties(TSP PROPERTIES
   WIN32_EXECUTABLE TRUE
 )
 
+# ==================== 打包相关配置开始 ====================
+
+# 查找 windeployqt 工具 (Windows)
+find_program(WINDEPLOYQT_EXECUTABLE windeployqt 
+    HINTS ${QT_DIR}/bin ${CMAKE_PREFIX_PATH}/bin
+    DOC "Qt Windows deployment tool"
+)
+
+# 查找 linuxdeployqt 工具 (Linux)
+find_program(LINUXDEPLOYQT_EXECUTABLE linuxdeployqt
+    DOC "Linux deployment tool for Qt applications"
+)
+
+# 查找 macdeployqt 工具 (macOS)
+find_program(MACDEPLOYQT_EXECUTABLE macdeployqt
+    HINTS ${QT_DIR}/bin ${CMAKE_PREFIX_PATH}/bin
+    DOC "Qt macOS deployment tool"
+)
+
+# 创建部署目录
+set(DEPLOY_DIR ${CMAKE_BINARY_DIR}/deploy)
+set(INSTALLER_DIR ${CMAKE_BINARY_DIR}/installer)
+
+# 添加部署目标
+if(WINDEPLOYQT_EXECUTABLE AND WIN32)
+    add_custom_target(deploy
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEPLOY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${DEPLOY_DIR}/config"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:TSP> "${DEPLOY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/config/tsp_config.ini" "${DEPLOY_DIR}/config"
+        COMMAND ${WINDEPLOYQT_EXECUTABLE} 
+                --compiler-runtime 
+                --no-translations 
+                --no-system-d3d-compiler 
+                --no-opengl-sw 
+                "${DEPLOY_DIR}/$<TARGET_FILE_NAME:TSP>"
+        COMMENT "Deploying TSP application with Qt dependencies..."
+        DEPENDS TSP
+    )
+elseif(MACDEPLOYQT_EXECUTABLE AND APPLE)
+    add_custom_target(deploy
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEPLOY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${DEPLOY_DIR}/config"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "$<TARGET_BUNDLE_DIR:TSP>" "${DEPLOY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/config/tsp_config.ini" "${DEPLOY_DIR}/config"
+        COMMAND ${MACDEPLOYQT_EXECUTABLE} "${DEPLOY_DIR}/$<TARGET_BUNDLE_CONTENT_DIR:TSP>/.." 
+                -always-overwrite
+        COMMENT "Deploying TSP application for macOS..."
+        DEPENDS TSP
+    )
+elseif(LINUXDEPLOYQT_EXECUTABLE AND UNIX AND NOT APPLE)
+    add_custom_target(deploy
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEPLOY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${DEPLOY_DIR}/config"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:TSP> "${DEPLOY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/config/tsp_config.ini" "${DEPLOY_DIR}/config"
+        COMMAND ${LINUXDEPLOYQT_EXECUTABLE} 
+                "${DEPLOY_DIR}/$<TARGET_FILE_NAME:TSP>" 
+                -appimage
+                -always-overwrite
+        COMMENT "Deploying TSP application for Linux..."
+        DEPENDS TSP
+    )
+endif()
+
+# 创建 ZIP 打包目标
+add_custom_target(package
+    COMMAND ${CMAKE_COMMAND} -E tar cf "${CMAKE_BINARY_DIR}/TSP-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}.zip" 
+            --format=zip 
+            "${DEPLOY_DIR}"
+    DEPENDS deploy
+    COMMENT "Creating distribution package..."
+)
+
+# 添加资源文件安装
+install(FILES 
+    ${CMAKE_SOURCE_DIR}/config/tsp_config.ini
+    DESTINATION config
+)
+
+# 添加翻译文件安装
+install(FILES 
+    ${QM_FILES}
+    DESTINATION translations
+)
+
+# 创建便携式版本目标
+add_custom_target(portable
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/config/tsp_config.ini" 
+            "${CMAKE_BINARY_DIR}/$<TARGET_FILE_NAME:TSP>.ini"
+    COMMENT "Creating portable version configuration..."
+    DEPENDS TSP
+)
+
+# 添加清理部署文件的目标
+add_custom_target(clean_deploy
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEPLOY_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${INSTALLER_DIR}"
+    COMMENT "Cleaning deployment files..."
+)
+
+# ==================== 打包相关配置结束 ====================
+
 include(GNUInstallDirs)
 install(TARGETS TSP
   BUNDLE DESTINATION .
@@ -109,3 +212,13 @@ install(TARGETS TSP
 if(QT_VERSION_MAJOR EQUAL 6)
   qt_finalize_executable(TSP)
 endif()
+
+# 显示打包相关信息
+message(STATUS "Packaging targets available:")
+message(STATUS "  make deploy      - Deploy application with Qt dependencies")
+message(STATUS "  make package     - Create distribution package")
+if(ISCC_EXECUTABLE)
+    message(STATUS "  make create_installer - Create Windows installer")
+endif()
+message(STATUS "  make portable    - Create portable version")
+message(STATUS "  make clean_deploy - Clean deployment files")

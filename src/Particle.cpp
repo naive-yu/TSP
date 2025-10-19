@@ -1,10 +1,10 @@
 #include "Particle.h"
 #include "Algorithm.h"
+#include <QLoggingCategory>
 #include <algorithm>
 #include <chrono>
 #include <numeric>
 #include <random>
-#include <QLoggingCategory>
 
 Q_LOGGING_CATEGORY(ParticleLog, "Particle")
 
@@ -25,7 +25,10 @@ Particle::Particle(int city, ParticleParams &&params)
 
 void Particle::init(const std::vector<std::vector<int>> &pos,
                     const std::vector<std::vector<double>> &dis) {
-  qCInfo(ParticleLog) << "Initializing Particle algorithm with" << city_ << "cities.";
+  qCInfo(ParticleLog) << "Initializing Particle algorithm with" << city_
+                      << "cities," << max_iter_ << "max_iter," << particle_num_
+                      << "particle_num," << max_w_ << "max_w," << min_w_
+                      << "min_w," << c1_ << "c1," << c2_ << "c2.";
 
   Algorithm::init(pos, dis);
   // 粒子群初始化

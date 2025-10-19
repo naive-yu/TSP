@@ -27,7 +27,10 @@ Ant_colony::Ant_colony(int city, AntParams &&params)
 
 void Ant_colony::init(const std::vector<std::vector<int>> &pos,
                       const std::vector<std::vector<double>> &dis) {
-  qCInfo(AntColonyLog) << "Initializing Ant Colony algorithm with" << city_ << "cities.";
+  qCInfo(AntColonyLog) << "Initializing Ant Colony algorithm with" << city_
+                       << "cities," << ants_ << "ants," << max_iter_
+                       << "max_iter," << Q_ << "Q," << alpha_ << "alpha,"
+                       << beta_ << "beta," << rho_ << "rho.";
 
   // 距离矩阵
   Algorithm::init(pos, dis);

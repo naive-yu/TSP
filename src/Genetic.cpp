@@ -1,11 +1,11 @@
 #include "Genetic.h"
 #include "Algorithm.h"
+#include <QLoggingCategory>
 #include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <memory>
 #include <numeric>
-#include <QLoggingCategory>
 #include <random>
 
 Q_LOGGING_CATEGORY(GeneticLog, "Genetic")
@@ -26,7 +26,9 @@ Genetic::Genetic(int city, GeneticParams &&params)
 
 void Genetic::init(const std::vector<std::vector<int>> &pos,
                    const std::vector<std::vector<double>> &dis) {
-  qCInfo(GeneticLog) << "Initializing Genetic algorithm with" << city_ << "cities.";
+  qCInfo(GeneticLog) << "Initializing Genetic algorithm with" << city_
+                     << "cities," << max_iter_ << "max_iter," << individual_num_
+                     << "individual_num," << mutate_prob_ << "mutate_prob.";
 
   Algorithm::init(pos, dis);
   // 种群初始化

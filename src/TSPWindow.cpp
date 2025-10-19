@@ -18,7 +18,8 @@ Q_LOGGING_CATEGORY(TSPWindowLog, "TSPWindow")
 TSPWindow::TSPWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::TSPWindow), timer(nullptr) {
   ui->setupUi(this);
-  cfg_ = std::make_shared<Config>(QStringLiteral("../config/tsp_config.ini"));
+  QString configPath = QCoreApplication::applicationDirPath() + "/config/tsp_config.ini";
+  cfg_ = std::make_shared<Config>(configPath);
   executer_ = std::make_unique<AlgoExecuter>(cfg_, this);
   connect(executer_.get(), &AlgoExecuter::finished, this,
           &TSPWindow::showDialog);
