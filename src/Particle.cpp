@@ -4,6 +4,9 @@
 #include <chrono>
 #include <numeric>
 #include <random>
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(ParticleLog, "Particle")
 
 Particle::Particle(int city, int max_iter, int particle_num, double max_w,
                    double min_w, double c1, double c2)
@@ -22,6 +25,8 @@ Particle::Particle(int city, ParticleParams &&params)
 
 void Particle::init(const std::vector<std::vector<int>> &pos,
                     const std::vector<std::vector<double>> &dis) {
+  qCInfo(ParticleLog) << "Initializing Particle algorithm with" << city_ << "cities.";
+
   Algorithm::init(pos, dis);
   // 粒子群初始化
   particles_best.assign(particle_num_, std::vector<int>(city_));
@@ -61,6 +66,8 @@ void Particle::init(const std::vector<std::vector<int>> &pos,
   best_aim_[0] = mini;
   avg_aim_[0] = std::accumulate(lens.begin(), lens.end(), 0.0) / particle_num_;
   cur_iter_ = 1;
+
+  qCInfo(ParticleLog) << "Particle algorithm initialized.";
 }
 
 void Particle::run() {

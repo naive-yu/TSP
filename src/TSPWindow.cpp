@@ -5,12 +5,15 @@
 #include "resource.h"
 #include "ui_TSPWindow.h"
 #include <QPainter>
+#include <QLoggingCategory>
 #include <cassert>
 #include <cmath>
 #include <memory>
 #include <qobjectdefs.h>
 #include <string>
 #include <vector>
+
+Q_LOGGING_CATEGORY(TSPWindowLog, "TSPWindow")
 
 TSPWindow::TSPWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::TSPWindow), timer(nullptr) {
@@ -62,6 +65,8 @@ void TSPWindow::resetTimer() noexcept {
 }
 
 void TSPWindow::deal_menu(QAction *action) {
+  qCInfo(TSPWindowLog) << "Menu action triggered:" << action->objectName();
+
   if (action->objectName() == "action11") {
     reset();
     city_ = 29;
@@ -86,10 +91,12 @@ void TSPWindow::deal_menu(QAction *action) {
   }
 
   if (city_ != 0) {
+    qCInfo(TSPWindowLog) << "City set to" << city_;
     update();
   }
 
   if (city_ == 0) {
+    qCWarning(TSPWindowLog) << "No city selected. Please choose a dataset.";
     ui->statusbar->showMessage("请先选择数据集! ");
   } else if (action->objectName() == "action211") {
     executer_->execute(Ant_Type, city_, position, distance, false);
@@ -127,7 +134,7 @@ void TSPWindow::deal_menu(QAction *action) {
 
 void TSPWindow::show_route(const std::vector<int> &route, int iter,
                            int max_iter) {
-  qDebug() << "show_route call: iter " << iter << " city " << route.size();
+  qCInfo(TSPWindowLog) << "show_route: iter " << iter << " city " << route.size();
   QString str = QString("show_route: %1/%2").arg(iter).arg(max_iter);
   ui->statusbar->showMessage(str);
   this->route = std::make_shared<const std::vector<int>>(route);
@@ -185,5 +192,5 @@ template <typename T> void TSPWindow::print(std::vector<T> &nums) const {
   for (T &t : nums) {
     str += std::to_string(t);
   }
-  qDebug() << str;
+  qCInfo(TSPWindowLog) << str;
 }

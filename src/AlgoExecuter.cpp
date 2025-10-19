@@ -1,6 +1,8 @@
 #include "AlgoExecuter.h"
-#include <QDebug>
+#include <QLoggingCategory>
 #include <QThread>
+
+Q_LOGGING_CATEGORY(AlgoExecuterLog, "AlgoExecuter")
 
 AlgoExecuter::AlgoExecuter(std::shared_ptr<Config> config, QObject *parent)
     : QObject(parent), cfg_(std::move(config)) {}
@@ -11,6 +13,8 @@ void AlgoExecuter::execute(AlgoType type, int city,
                            const std::vector<std::vector<int>> &pos,
                            const std::vector<std::vector<double>> &dis,
                            bool stepByStep) {
+  qCInfo(AlgoExecuterLog) << "Executing algorithm of type:" << type << "for city:" << city;
+
   if (worker_thread_ && worker_thread_->isRunning()) {
     stop();
   }
@@ -40,6 +44,8 @@ void AlgoExecuter::execute(AlgoType type, int city,
 
   // 启动线程
   worker_thread_->start();
+
+  qCInfo(AlgoExecuterLog) << "Execution started.";
 }
 
 void AlgoExecuter::stop() {

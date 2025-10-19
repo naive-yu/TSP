@@ -1,11 +1,14 @@
 #include "Ant_colony.h"
 #include "Algorithm.h"
+#include <QLoggingCategory>
 #include <QString>
 #include <cmath>
 #include <memory>
 #include <numeric>
 #include <random>
 #include <vector>
+
+Q_LOGGING_CATEGORY(AntColonyLog, "AntColony")
 
 Ant_colony::Ant_colony(int city, int ants, int max_iter, int Q, double alpha,
                        double beta, double rho)
@@ -24,10 +27,14 @@ Ant_colony::Ant_colony(int city, AntParams &&params)
 
 void Ant_colony::init(const std::vector<std::vector<int>> &pos,
                       const std::vector<std::vector<double>> &dis) {
+  qCInfo(AntColonyLog) << "Initializing Ant Colony algorithm with" << city_ << "cities.";
+
   // 距离矩阵
   Algorithm::init(pos, dis);
   // 信息素矩阵
   message.assign(city_, std::vector<double>(city_, 1.0));
+
+  qCInfo(AntColonyLog) << "Ant Colony algorithm initialized.";
 }
 
 void Ant_colony::run() {

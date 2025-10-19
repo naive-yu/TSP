@@ -5,8 +5,10 @@
 #include <iostream>
 #include <memory>
 #include <numeric>
-#include <qDebug>
+#include <QLoggingCategory>
 #include <random>
+
+Q_LOGGING_CATEGORY(GeneticLog, "Genetic")
 
 Genetic::Genetic(int city, int max_iter, int individual_num, double mutate_prob)
     : Algorithm(city, max_iter, "Genetic"), individual_num_(individual_num),
@@ -24,6 +26,8 @@ Genetic::Genetic(int city, GeneticParams &&params)
 
 void Genetic::init(const std::vector<std::vector<int>> &pos,
                    const std::vector<std::vector<double>> &dis) {
+  qCInfo(GeneticLog) << "Initializing Genetic algorithm with" << city_ << "cities.";
+
   Algorithm::init(pos, dis);
   // 种群初始化
   individuals_.assign(individual_num_, std::vector<int>(city_));
@@ -39,6 +43,8 @@ void Genetic::init(const std::vector<std::vector<int>> &pos,
     individuals_[i] = base;
     individuals_t_[i] = base;
   }
+
+  qCInfo(GeneticLog) << "Genetic algorithm initialized.";
 }
 
 void Genetic::run() {
