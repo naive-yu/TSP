@@ -30,6 +30,10 @@ set(PROJECT_SOURCES
   ${TS_FILES}
   src/include/Config.h
   src/Config.cpp
+  src/include/AlgoExecuter.h
+  src/AlgoExecuter.cpp
+  src/include/AlgorithmWorker.h
+  src/AlgorithmWorker.cpp
   src/include/Algorithm.h
   src/Algorithm.cpp
   src/Ant_colony.cpp

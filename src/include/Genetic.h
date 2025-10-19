@@ -7,15 +7,13 @@
 class Genetic : public Algorithm {
 public:
   Genetic() = default;
-  Genetic(const Genetic &) = delete;
-  Genetic &operator=(const Genetic &) = delete;
-  Genetic(Genetic &&) = default;
-  Genetic &operator=(Genetic &&) = default;
   Genetic(int city, int max_iter, int individual_num, double mutate_prob);
   Genetic(int city, GeneticParams &params);
+  Genetic(int city, GeneticParams &&params);
   void init(const std::vector<std::vector<int>> &pos,
             const std::vector<std::vector<double>> &dis) override;
   void run() override;
+  bool runStep() override;
   QString output() const override;
   ~Genetic() override = default;
 

@@ -1,27 +1,26 @@
 #include "TSPWindow.h"
-#include "Ant_colony.h"
+#include "AlgoExecuter.h"
 #include "Config.h"
 #include "Dialog.h"
-#include "Genetic.h"
-#include "Particle.h"
 #include "resource.h"
 #include "ui_TSPWindow.h"
 #include <QPainter>
 #include <cmath>
 #include <memory>
-#include <qstringliteral.h>
-#include <qtimer.h>
 #include <vector>
 
 TSPWindow::TSPWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::TSPWindow) {
+    : QMainWindow(parent), ui(new Ui::TSPWindow), timer(nullptr) {
   ui->setupUi(this);
   cfg_ = std::make_shared<Config>(QStringLiteral("../config/tsp_config.ini"));
-  timer = nullptr;
+  executer_ = std::make_unique<AlgoExecuter>(cfg_, this);
+  connect(executer_.get(), &AlgoExecuter::finished, this,
+          &TSPWindow::showDialog);
+  connect(executer_.get(), &AlgoExecuter::routeUpdated, this,
+          &TSPWindow::show_route);
 }
 
 TSPWindow::~TSPWindow() {
-  resetTimer();
   delete ui;
 }
 
@@ -36,15 +35,18 @@ void TSPWindow::computeDistance() {
   }
 }
 
-void TSPWindow::showDialog() {
-  if (timer != nullptr) {
-    timer->stop();
-  }
-  ui->listWidget->addItem(algo->output());
+void TSPWindow::showDialog(const QString &result,
+                           const std::vector<double> &best,
+                           const std::vector<double> &avg) {
+  ui->listWidget->addItem(result);
   auto dialog = new Dialog(this);
   dialog->setAttribute(Qt::WA_DeleteOnClose, true); // 自动关闭时删除
-  dialog->init(algo->get_best_aim(), algo->get_avg_aim());
+  dialog->init(best, avg);
   dialog->show();
+}
+
+void TSPWindow::reset() noexcept {
+  executer_->stop();
 }
 
 void TSPWindow::resetTimer() noexcept {
@@ -57,19 +59,19 @@ void TSPWindow::resetTimer() noexcept {
 
 void TSPWindow::deal_menu(QAction *action) {
   if (action->objectName() == "action11") {
-    resetTimer();
+    reset();
     city_ = 29;
     position = bayg29_position;
     computeDistance();
     route = nullptr;
   } else if (action->objectName() == "action12") {
-    resetTimer();
+    reset();
     city_ = 48;
     position = att48_position;
     route = nullptr;
     computeDistance();
   } else if (action->objectName() == "action13") {
-    resetTimer();
+    reset();
     city_ = 70;
     position = st70_position;
     route = nullptr;
@@ -83,101 +85,24 @@ void TSPWindow::deal_menu(QAction *action) {
   if (city_ == 0) {
     ui->statusbar->showMessage("请先选择数据集! ");
   } else if (action->objectName() == "action211") {
-    auto params = cfg_->getAntParams(city_);
-    algo = std::make_unique<Ant_colony>(city_, params);
-    algo->init(position, distance);
-    algo->run();
-
-    route = std::make_shared<std::vector<int>>(algo->get_route().back());
-    update();
-    showDialog();
+    executer_->execute(Ant_Type, city_, position, distance, false);
   } else if (action->objectName() == "action212") {
-    idx_ = 0;
-    auto params = cfg_->getAntParams(city_);
-    max_iter_ = params.max_iter;
-    algo = std::make_unique<Ant_colony>(city_, params);
-    algo->init(position, distance);
-    algo->run();
-
-    resetTimer();
-    timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &TSPWindow::show_route);
-    timer->start(100);
+    executer_->execute(Ant_Type, city_, position, distance, true);
   } else if (action->objectName() == "action221") {
-    auto params = cfg_->getGeneticParams(city_);
-    algo = std::make_unique<Genetic>(city_, params);
-    algo->init(position, distance);
-    algo->run();
-
-    route = std::make_shared<std::vector<int>>(algo->get_route().back());
-    update();
-    showDialog();
+    executer_->execute(Genetic_Type, city_, position, distance, false);
   } else if (action->objectName() == "action222") {
-    idx_ = 0;
-    auto params = cfg_->getGeneticParams(city_);
-    max_iter_ = params.max_iter;
-    algo = std::make_unique<Genetic>(city_, params);
-    algo->init(position, distance);
-    algo->run();
-
-    resetTimer();
-    timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &TSPWindow::show_route);
-    timer->start(100);
+    executer_->execute(Genetic_Type, city_, position, distance, true);
   } else if (action->objectName() == "action231") {
-    auto params = cfg_->getParticleParams(city_);
-    algo = std::make_unique<Particle>(city_, params);
-    algo->init(position, distance);
-    algo->run();
-
-    route = std::make_shared<std::vector<int>>(algo->get_route().back());
-    update();
-    showDialog();
+    executer_->execute(Particle_Type, city_, position, distance, false);
   } else if (action->objectName() == "action232") {
-    idx_ = 0;
-    auto params = cfg_->getParticleParams(city_);
-    max_iter_ = params.max_iter;
-    algo = std::make_unique<Particle>(city_, params);
-    algo->init(position, distance);
-    algo->run();
-
-    resetTimer();
-    timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &TSPWindow::show_route);
-    timer->start(100);
+    executer_->execute(Particle_Type, city_, position, distance, true);
   }
 }
 
-void TSPWindow::show_route() {
-  if (algo == nullptr) {
-    resetTimer();
-    return;
-  }
-
-  const auto &routes = algo->get_route();
-  if (routes.empty()) {
-    resetTimer();
-    return;
-  }
-
-  if (idx_ < 0) {
-    idx_ = 0;
-  }
-
-  if (idx_ >= max_iter_) {
-    resetTimer();
-    showDialog();
-    return;
-  }
-
-  route = std::make_shared<std::vector<int>>(routes[idx_]);
+void TSPWindow::show_route(const std::vector<int> &route, int iter) {
+  qDebug() << "show_route call: iter " << iter << " city " << route.size();
+  this->route = std::make_shared<const std::vector<int>>(route);
   update();
-
-  ++idx_;
-  if (idx_ >= max_iter_) {
-    resetTimer();
-    showDialog();
-  }
 }
 
 void TSPWindow::paintEvent(QPaintEvent *event) {
@@ -202,7 +127,7 @@ void TSPWindow::paintEvent(QPaintEvent *event) {
                           menu_height + (int)(position[i][1] * scale_y), 2, 2);
     }
   }
-  if (route != nullptr) {
+  if (route != nullptr && static_cast<int>(route->size()) == city_) {
     // 绘制当前路线
     painter.setPen(QPen(Qt::darkBlue, 1));
     QPoint start, end;
@@ -220,4 +145,13 @@ void TSPWindow::paintEvent(QPaintEvent *event) {
                  menu_height + (int)(position[(*route)[0]][1] * scale_y));
     painter.drawLine(start, end);
   }
+}
+
+template <typename T> 
+void TSPWindow::print(std::vector<T> &nums) const {
+  QString str;
+  for (T &t: nums) {
+    str += std::to_string(t);
+  }
+  qDebug() << str;
 }

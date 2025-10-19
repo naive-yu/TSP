@@ -1,4 +1,5 @@
 #pragma once
+#include "AlgoExecuter.h"
 #include "Algorithm.h"
 #include "Config.h"
 #include <QMainWindow>
@@ -20,19 +21,23 @@ public:
 
 private slots:
   void deal_menu(QAction *);
-  void show_route();
+  void show_route(const std::vector<int> &route, int iter);
+  void showDialog(const QString &result, const std::vector<double> &best,
+                  const std::vector<double> &avg);
 
 private:
   Ui::TSPWindow *ui;
   QTimer *timer;
-  std::unique_ptr<Algorithm> algo;
-  int city_{}, idx_{}, max_iter_{};
+  int city_{};
+  std::shared_ptr<Config> cfg_;
+  std::unique_ptr<AlgoExecuter> executer_;
   std::vector<std::vector<int>> position;
   std::vector<std::vector<double>> distance;
   std::shared_ptr<const std::vector<int>> route;
-  std::shared_ptr<Config> cfg_;
-  void showDialog();
+  void reset() noexcept;
   void resetTimer() noexcept;
   void paintEvent(QPaintEvent *event) override;
   void computeDistance();
+  template<typename T>
+  void print(std::vector<T> &nums) const;
 };

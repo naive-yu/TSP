@@ -17,18 +17,17 @@ Genetic::Genetic(int city, GeneticParams &params)
       individual_num_(params.individual_num), mutate_prob_(params.mutate_prob) {
 }
 
+Genetic::Genetic(int city, GeneticParams &&params)
+    : Algorithm(city, params.max_iter, "Genetic"),
+      individual_num_(params.individual_num), mutate_prob_(params.mutate_prob) {
+}
+
 void Genetic::init(const std::vector<std::vector<int>> &pos,
                    const std::vector<std::vector<double>> &dis) {
   Algorithm::init(pos, dis);
   // 种群初始化
   individuals_.assign(individual_num_, std::vector<int>(city_));
   individuals_t_.assign(individual_num_, std::vector<int>(city_));
-}
-
-void Genetic::run() {
-  // 线程局部随机数引擎
-  static thread_local std::mt19937 rng(static_cast<unsigned>(
-      std::chrono::high_resolution_clock::now().time_since_epoch().count()));
 
   // 随机构建生成初始种群
   std::vector<int> base(city_);
@@ -36,40 +35,50 @@ void Genetic::run() {
     base[i] = i;
   }
   for (int i = 0; i < individual_num_; i++) {
-    shuffle(base.begin(), base.end(), rng);
+    shuffle(base.begin(), base.end(), *rng_);
     individuals_[i] = base;
     individuals_t_[i] = base;
   }
+}
 
+void Genetic::run() {
+  while (runStep()) {
+  };
+}
+
+bool Genetic::runStep() {
   // 开始遗传算法
-  for (int gen = 0; gen < max_iter_; gen++) {
-    // 时针优化，统一采用顺时针方案
-    clock_opt();
-
-    // 交叉
-    cross();
-    // 变异
-    mutate();
-    // 选择
-    select();
-    // 进化逆转
-    reverse();
-
-    // 找出此代最佳路径
-    std::vector<double> fitness = get_fitness(individuals_);
-    double fitness_sum = std::accumulate(fitness.begin(), fitness.end(), 0.0);
-    avg_aim_[gen] = static_cast<double>(individual_num_) / fitness_sum;
-    double max_fitness = 0;
-    int max_idx = 0;
-    for (int i = 0; i < individual_num_; i++) {
-      if (fitness[i] > max_fitness) {
-        max_fitness = fitness[i];
-        max_idx = i;
-      }
-    }
-    best_aim_[gen] = (max_fitness > 0.0) ? 1.0 / max_fitness : ALGO_INF;
-    best_route_[gen] = individuals_[max_idx];
+  if (cur_iter_ >= max_iter_) {
+    return false;
   }
+
+  // 顺时针优化
+  clock_opt();
+  // 交叉
+  cross();
+  // 变异
+  mutate();
+  // 选择
+  select();
+  // 进化逆转
+  reverse();
+
+  // 找出此代最佳路径
+  std::vector<double> fitness = get_fitness(individuals_);
+  double fitness_sum = std::accumulate(fitness.begin(), fitness.end(), 0.0);
+  avg_aim_[cur_iter_] = static_cast<double>(individual_num_) / fitness_sum;
+  double max_fitness = 0;
+  int max_idx = 0;
+  for (int i = 0; i < individual_num_; i++) {
+    if (fitness[i] > max_fitness) {
+      max_fitness = fitness[i];
+      max_idx = i;
+    }
+  }
+  best_aim_[cur_iter_] = (max_fitness > 0.0) ? 1.0 / max_fitness : ALGO_INF;
+  best_route_[cur_iter_] = individuals_[max_idx];
+  ++cur_iter_;
+  return true;
 }
 
 std::vector<int> Genetic::search(std::vector<int> &individual,

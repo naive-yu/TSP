@@ -14,35 +14,37 @@ Particle::Particle(int city, ParticleParams &params)
     : Algorithm(city, params.max_iter, "Particle"),
       particle_num_(params.particle_num), max_w_(params.w1), min_w_(params.w2),
       c1_(params.c1), c2_(params.c2) {}
+
+Particle::Particle(int city, ParticleParams &&params)
+    : Algorithm(city, params.max_iter, "Particle"),
+      particle_num_(params.particle_num), max_w_(params.w1), min_w_(params.w2),
+      c1_(params.c1), c2_(params.c2) {}
+
 void Particle::init(const std::vector<std::vector<int>> &pos,
                     const std::vector<std::vector<double>> &dis) {
   Algorithm::init(pos, dis);
   // 粒子群初始化
   particles_best.assign(particle_num_, std::vector<int>(city_));
   particles.assign(particle_num_, std::vector<int>(city_));
-}
 
-void Particle::run() {
-  // 线程局部随机数引擎
-  static thread_local std::mt19937 rng(static_cast<unsigned>(
-      std::chrono::high_resolution_clock::now().time_since_epoch().count()));
-  std::uniform_real_distribution<double> u1(0, 1);
   std::vector<int> route(city_);
-  for (int i = 0; i < city_; i++)
+  for (int i = 0; i < city_; i++) {
     route[i] = i;
+  }
   for (int i = 0; i < particle_num_; i++) {
-    shuffle(route.begin(), route.end(), std::mt19937(std::random_device()()));
+    shuffle(route.begin(), route.end(), *rng_);
     particles[i] = route;
     particles_best[i] = route;
   }
 
   // 随机构建粒子初始速度
-  std::vector<std::vector<int>> v(particle_num_, std::vector<int>(city_));
-  for (int i = 0; i < city_; i++)
+  velocity_.assign(particle_num_, std::vector<int>(city_));
+  for (int i = 0; i < city_; i++) {
     route[i] = i;
+  }
   for (int i = 0; i < particle_num_; i++) {
-    v[i] = route;
-    shuffle(v[i].begin(), v[i].end(), std::mt19937(std::random_device()()));
+    velocity_[i] = route;
+    shuffle(velocity_[i].begin(), velocity_[i].end(), *rng_);
   }
 
   // 计算群体极值
@@ -58,83 +60,99 @@ void Particle::run() {
   best_route_[0] = particles[index];
   best_aim_[0] = mini;
   avg_aim_[0] = std::accumulate(lens.begin(), lens.end(), 0.0) / particle_num_;
+  cur_iter_ = 1;
+}
 
+void Particle::run() {
+  while (runStep()) {
+  };
+}
+
+bool Particle::runStep() {
+  if (cur_iter_ >= max_iter_) {
+    return false;
+  }
+
+  // change
   std::vector<std::vector<int>> change1(particle_num_, std::vector<int>(city_));
   std::vector<std::vector<int>> change2(particle_num_, std::vector<int>(city_));
-  double w;
-  for (int iter = 1; iter < max_iter_; iter++) {
-    // 更新惯性因子
-    w = max_w_ - (max_w_ - min_w_) * pow((iter / (0.0 + max_iter_)), 2);
-    // 更新速度, 个体极值修正部分
-    std::vector<int> p;
-    std::vector<int> b;
-    for (int i = 0; i < particle_num_; i++) {
-      p = particles[i];
-      b = particles_best[i];
-      for (int j = 0; j < city_; j++) {
-        change1[i][j] = find(p, b[j]); // 执行速度计算
-        int temp = p[j];
-        p[j] = p[change1[i][j]];
-        p[change1[i][j]] = temp;
-      }
-    }
-    // 群体极值修正部分
-    std::vector<int> gb = best_route_[iter - 1];
-    for (int i = 0; i < particle_num_; i++) {
-      p = particles[i];
-      for (int j = 0; j < city_; j++) {
-        change2[i][j] = find(p, gb[j]);
-        int temp = p[j];
-        p[j] = p[change2[i][j]];
-        p[change2[i][j]] = temp;
-      }
-    }
-    // 原速度部分
-    for (int i = 0; i < particle_num_; i++) {
-      for (int j = 0; j < city_; j++) {
-        if (u1(rng) > w)
-          v[i][j] = -1; // 一定概率保留原序列
-        if (u1(rng) < c1_)
-          v[i][j] = change1[i][j];
-        if (u1(rng) < c2_)
-          v[i][j] = change2[i][j];
-      }
-    }
-    // 更新位置
-    for (int i = 0; i < particle_num_; i++) {
-      for (int j = 0; j < city_; j++) {
-        if (v[i][j] != -1) {
-          int temp = particles[i][j];
-          particles[i][j] = particles[i][v[i][j]];
-          particles[i][v[i][j]] = temp;
-        }
-      }
-    }
-    // 变异
-    mutate();
-    // 进化逆转
-    // reverse();
-    // 时针优化
-    // clock_opt();
 
-    // 个体极值和群体极值更新
-    lens = get_length(particles);
-    for (int i = 0; i < particle_num_; i++) {
-      if (lens[i] < get_length(particles_best[i]))
-        particles_best[i] = particles[i];
+  // 更新惯性因子
+  double w =
+      max_w_ - (max_w_ - min_w_) * pow((cur_iter_ / (0.0 + max_iter_)), 2);
+  // 更新速度, 个体极值修正部分
+  std::vector<int> p;
+  std::vector<int> b;
+  for (int i = 0; i < particle_num_; i++) {
+    p = particles[i];
+    b = particles_best[i];
+    for (int j = 0; j < city_; j++) {
+      change1[i][j] = find(p, b[j]); // 执行速度计算
+      int temp = p[j];
+      p[j] = p[change1[i][j]];
+      p[change1[i][j]] = temp;
     }
-    index = 0;
-    mini = ALGO_INF;
-    for (int i = 0; i < particle_num_; i++) {
-      if (lens[i] < mini) {
-        index = i;
-        mini = lens[i];
+  }
+  // 群体极值修正部分
+  std::vector<int> gb = best_route_[cur_iter_ - 1];
+  for (int i = 0; i < particle_num_; i++) {
+    p = particles[i];
+    for (int j = 0; j < city_; j++) {
+      change2[i][j] = find(p, gb[j]);
+      int temp = p[j];
+      p[j] = p[change2[i][j]];
+      p[change2[i][j]] = temp;
+    }
+  }
+  // 原速度部分
+  for (int i = 0; i < particle_num_; i++) {
+    for (int j = 0; j < city_; j++) {
+      if ((*ur_)(*rng_) > w)
+        velocity_[i][j] = -1; // 一定概率保留原序列
+      if ((*ur_)(*rng_) < c1_)
+        velocity_[i][j] = change1[i][j];
+      if ((*ur_)(*rng_) < c2_)
+        velocity_[i][j] = change2[i][j];
+    }
+  }
+  // 更新位置
+  for (int i = 0; i < particle_num_; i++) {
+    for (int j = 0; j < city_; j++) {
+      if (velocity_[i][j] != -1) {
+        int temp = particles[i][j];
+        particles[i][j] = particles[i][velocity_[i][j]];
+        particles[i][velocity_[i][j]] = temp;
       }
     }
-    best_route_[iter] = particles[index];
-    best_aim_[iter] = mini;
-    avg_aim_[iter] = accumulate(lens.begin(), lens.end(), 0.0) / particle_num_;
   }
+  // 变异
+  mutate();
+  // 进化逆转
+  // reverse();
+  // 时针优化
+  // clock_opt();
+
+  // 个体极值和群体极值更新
+  auto lens = get_length(particles);
+  for (int i = 0; i < particle_num_; i++) {
+    if (lens[i] < get_length(particles_best[i]))
+      particles_best[i] = particles[i];
+  }
+  int index = 0;
+  double mini = ALGO_INF;
+  for (int i = 0; i < particle_num_; i++) {
+    if (lens[i] < mini) {
+      index = i;
+      mini = lens[i];
+    }
+  }
+  best_route_[cur_iter_] = particles[index];
+  best_aim_[cur_iter_] = mini;
+  avg_aim_[cur_iter_] =
+      accumulate(lens.begin(), lens.end(), 0.0) / particle_num_;
+
+  ++cur_iter_;
+  return true;
 }
 
 void Particle::clock_opt() {
